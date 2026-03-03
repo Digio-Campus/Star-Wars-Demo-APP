@@ -1,0 +1,26 @@
+{
+    "mcpServers": {
+        "hyper-mcp":{
+            "type": "stdio",
+            "command": "wsl",
+            "args": [
+                "-d",
+                "Ubuntu",
+                "hyper-mcp",
+                "--config-file",
+                "$HOME/.config/hyper-mcp/config.json"
+            ],
+            "tools": [
+                "*"
+            ]
+        },
+        "remembrances": {
+            "type": "http",
+            "url": "http://localhost:3030/mcp"
+        },
+        "mesnada": {
+            "type": "http",
+            "url": "http://127.0.0.1:8767/mcp"
+        }
+    }
+}

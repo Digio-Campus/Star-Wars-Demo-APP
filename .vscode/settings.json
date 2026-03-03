@@ -1,0 +1,10 @@
+{
+    "chat.mcp.serverSampling": {
+        "Star-Wars-Demo-APP/.vscode/mcp.json: mesnada": {
+            "allowedModels": [
+                "copilot/auto",
+                "copilot/gpt-4.1"
+            ]
+        }
+    }
+}

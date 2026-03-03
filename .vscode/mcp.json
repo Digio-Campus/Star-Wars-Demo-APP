@@ -2,7 +2,7 @@
     "servers": {
         "remembrances":{
             "type": "http",
-            "url": "http://127.0.0.1:3030/mcp"
+            "url": "http://localhost:3030/mcp"
         },
         "mesnada":{
             "type": "http",
@@ -10,13 +10,16 @@
         },
         "hyper-mcp":{
             "type": "stdio",
-            "command": "wls -d ubuntu hyper-mcp",
+            "command": "wsl",
             "args": [
+                "-d",
+                "Ubuntu",
+                "hyper-mcp",
                 "--config-file",
                 "$HOME/.config/hyper-mcp/config.json"
             ],
             "env": {
-                "SERPER_API_KEY": "${input:SERPER_API_KEY}"
+                "SERPER_API_KEY": "${env:SERPER_API_KEY}"
             }
         }
     }
