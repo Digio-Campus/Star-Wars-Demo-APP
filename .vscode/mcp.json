@@ -10,13 +10,10 @@
         },
         "hyper-mcp":{
             "type": "stdio",
-            "command": "wsl",
+            "command": "/home/valero/.cargo/bin/hyper-mcp",
             "args": [
-                "-d",
-                "Ubuntu",
-                "hyper-mcp",
                 "--config-file",
-                "$HOME/.config/hyper-mcp/config.json"
+                "/home/valero/Star-Wars-Demo-APP/.ai/config/hyper-mcp.json"
             ],
             "env": {
                 "SERPER_API_KEY": "${env:SERPER_API_KEY}"
