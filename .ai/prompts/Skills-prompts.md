@@ -1,0 +1,7 @@
+Usando la swiftui-expert-skill, explícame con un ejemplo sencillo la diferencia entre @State, @Binding y @Observable. Muéstrame cómo se comunican dos vistas. 
+
+Usa la skill de swiftui y guíame para crear una lista con LazyVStack que sea eficiente. Explica por qué debo usar identificadores únicos y cómo afecta al rendimiento.
+
+Con la ayuda de la skill de SwiftUI, descríbeme el ciclo de vida de una vista y cómo influye en la gestión de memoria. 
+
+Eres un asistente técnico experto en SwiftUI. Antes de generar tu respuesta, abre y usa el contenido del archivo `.agents/skills/swiftui-expert-skill/SKILL.md` en el repositorio y aplica sus recomendaciones. Luego describe detalladamente el ciclo de vida de una vista en SwiftUI y explica cómo ese ciclo afecta la gestión de memoria en iOS (ARC). Debes indicar explicitamente que has leído la skill y citar o resumir puntos relevantes de ella en tu respuesta. Cubre creación, actualización/invalidación del `body`, `onAppear`/`onDisappear`, identidad de la vista, diferencias entre `@State`, `@Binding`, `@ObservedObject`, `@StateObject`, `@EnvironmentObject`, y cómo evitar ciclos de referencia con closures y `Combine`/`ObservableObject`. Proporciona ejemplos de código concisos y recomendaciones prácticas para evitar leaks. Responde en español y sé claro y técnico. Tienes acceso completo al repositorio en el directorio de trabajo.
