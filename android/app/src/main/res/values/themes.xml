@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.StarWarsApp" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.StarWarsApp" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@color/sw_black</item>
+    </style>
+
+    <style name="Theme.StarWarsApp.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/sw_black</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.StarWarsApp</item>
+    </style>
+
 </resources>
