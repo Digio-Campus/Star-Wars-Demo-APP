@@ -1,32 +1,29 @@
-//
-//  Star_Wars_Demo_APPApp.swift
-//  Star-Wars-Demo-APP
-//
-//  Created by valero on 25/3/26.
-//
-
 import SwiftUI
 import SwiftData
 
 @main
 struct Star_Wars_Demo_APPApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+    let modelContainer: ModelContainer
+    @State private var dependencies: DependencyContainer
+
+    @MainActor
+    init() {
+        let schema = Schema([FilmSwiftDataModel.self])
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            let container = try ModelContainer(for: schema, configurations: [configuration])
+            self.modelContainer = container
+            _dependencies = State(initialValue: DependencyContainer(modelContainer: container))
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
-    }()
+    }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(dependencies: dependencies)
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(modelContainer)
     }
 }
