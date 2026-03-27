@@ -47,6 +47,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
@@ -73,6 +74,9 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+
+    // Needed for XML base themes like Theme.Material3.*
+    implementation(libs.google.material)
 
     // Navigation
     implementation(libs.androidx.navigation.compose)
