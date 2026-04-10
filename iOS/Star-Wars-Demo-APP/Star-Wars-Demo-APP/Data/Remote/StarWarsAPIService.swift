@@ -8,6 +8,15 @@ enum StarWarsAPIError: Error {
 protocol StarWarsAPIServiceProtocol {
     func fetchFilms() async throws -> [FilmDTO]
     func fetchFilm(id: Int) async throws -> FilmDTO
+
+    func fetchPeople() async throws -> [PersonDTO]
+    func fetchPerson(id: Int) async throws -> PersonDTO
+
+    func fetchPlanets() async throws -> [PlanetDTO]
+    func fetchPlanet(id: Int) async throws -> PlanetDTO
+
+    func fetchStarships() async throws -> [StarshipDTO]
+    func fetchStarship(id: Int) async throws -> StarshipDTO
 }
 
 final class StarWarsAPIService: StarWarsAPIServiceProtocol {
@@ -25,6 +34,36 @@ final class StarWarsAPIService: StarWarsAPIServiceProtocol {
 
     func fetchFilm(id: Int) async throws -> FilmDTO {
         let url = baseURL.appending(path: "films").appending(path: String(id))
+        return try await request(url: url)
+    }
+
+    func fetchPeople() async throws -> [PersonDTO] {
+        let url = baseURL.appending(path: "people")
+        return try await request(url: url)
+    }
+
+    func fetchPerson(id: Int) async throws -> PersonDTO {
+        let url = baseURL.appending(path: "people").appending(path: String(id))
+        return try await request(url: url)
+    }
+
+    func fetchPlanets() async throws -> [PlanetDTO] {
+        let url = baseURL.appending(path: "planets")
+        return try await request(url: url)
+    }
+
+    func fetchPlanet(id: Int) async throws -> PlanetDTO {
+        let url = baseURL.appending(path: "planets").appending(path: String(id))
+        return try await request(url: url)
+    }
+
+    func fetchStarships() async throws -> [StarshipDTO] {
+        let url = baseURL.appending(path: "starships")
+        return try await request(url: url)
+    }
+
+    func fetchStarship(id: Int) async throws -> StarshipDTO {
+        let url = baseURL.appending(path: "starships").appending(path: String(id))
         return try await request(url: url)
     }
 

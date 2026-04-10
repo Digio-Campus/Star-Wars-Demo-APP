@@ -8,7 +8,12 @@ struct Star_Wars_Demo_APPApp: App {
 
     @MainActor
     init() {
-        let schema = Schema([FilmSwiftDataModel.self])
+        let schema = Schema([
+            FilmSwiftDataModel.self,
+            PersonSwiftDataModel.self,
+            PlanetSwiftDataModel.self,
+            StarshipSwiftDataModel.self
+        ])
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {

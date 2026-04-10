@@ -1,28 +1,24 @@
 import SwiftUI
 
-struct FilmListView: View {
-    private let repository: FilmRepository
+struct PersonListView: View {
+    private let repository: PersonRepository
+    @StateObject private var viewModel: PersonListViewModel
 
-    @StateObject private var viewModel: FilmListViewModel
-
-    init(repository: FilmRepository) {
+    init(repository: PersonRepository) {
         self.repository = repository
-        _viewModel = StateObject(wrappedValue: FilmListViewModel(repository: repository))
+        _viewModel = StateObject(wrappedValue: PersonListViewModel(repository: repository))
     }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 12) {
-                SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by title")
+                SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by name")
                 content
             }
-            .navigationTitle("Star Wars Films")
+            .navigationTitle("Star Wars People")
             .background(StarWarsColors.background)
             .task {
-                viewModel.loadFilms()
-            }
-            .navigationDestination(for: Int.self) { filmId in
-                FilmDetailView(repository: repository, filmId: filmId)
+                viewModel.loadPeople()
             }
         }
     }
@@ -36,27 +32,24 @@ struct FilmListView: View {
 
         case .empty:
             ContentUnavailableView(
-                "No films",
-                systemImage: "film",
+                "No people",
+                systemImage: "person.2",
                 description: Text("Try a different search.")
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
         case .error(let message):
             ErrorView(message: message) {
-                viewModel.loadFilms()
+                viewModel.loadPeople()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-        case .success(let films, let page, let totalPages):
+        case .success(let people, let page, let totalPages):
             ScrollView {
                 LazyVStack(spacing: 12) {
-                    ForEach(films) { film in
-                        NavigationLink(value: film.id) {
-                            FilmCardView(film: film)
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal)
+                    ForEach(people) { person in
+                        PersonCardView(person: person)
+                            .padding(.horizontal)
                     }
 
                     PaginationView(

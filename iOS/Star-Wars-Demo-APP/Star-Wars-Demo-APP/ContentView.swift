@@ -10,7 +10,12 @@ struct ContentView: View {
 }
 
 #Preview {
-    let schema = Schema([FilmSwiftDataModel.self])
+    let schema = Schema([
+        FilmSwiftDataModel.self,
+        PersonSwiftDataModel.self,
+        PlanetSwiftDataModel.self,
+        StarshipSwiftDataModel.self
+    ])
     let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: schema, configurations: [configuration])
     let deps = DependencyContainer(modelContainer: container)

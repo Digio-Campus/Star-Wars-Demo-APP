@@ -2,13 +2,14 @@ import SwiftUI
 
 struct SearchBarView: View {
     @Binding var text: String
+    var placeholder: String = "Search"
 
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
 
-            TextField("Search by title", text: $text)
+            TextField(placeholder, text: $text)
                 .textInputAutocapitalization(.never)
                 .disableAutocorrection(true)
 

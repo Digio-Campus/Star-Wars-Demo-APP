@@ -8,7 +8,7 @@ struct AppRouter: View {
     var body: some View {
         Group {
             if didFinishSplash {
-                FilmListView(repository: dependencies.filmRepository)
+                MainTabView(dependencies: dependencies)
             } else {
                 SplashView {
                     withAnimation(.easeOut(duration: 0.3)) {
