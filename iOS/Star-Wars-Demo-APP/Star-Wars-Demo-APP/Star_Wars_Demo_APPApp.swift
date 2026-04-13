@@ -5,6 +5,7 @@ import SwiftData
 struct Star_Wars_Demo_APPApp: App {
     let modelContainer: ModelContainer
     @State private var dependencies: DependencyContainer
+    @StateObject private var themeManager = ThemeManager()
 
     @MainActor
     init() {
@@ -28,6 +29,8 @@ struct Star_Wars_Demo_APPApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView(dependencies: dependencies)
+                .environmentObject(themeManager)
+                .preferredColorScheme(themeManager.preferredColorScheme)
         }
         .modelContainer(modelContainer)
     }

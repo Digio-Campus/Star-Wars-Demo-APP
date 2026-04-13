@@ -24,6 +24,11 @@ struct MainTabView: View {
                 .tabItem {
                     Label("People", systemImage: "person.2")
                 }
+
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "gear")
+                }
         }
         .tint(StarWarsColors.primary)
     }
