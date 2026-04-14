@@ -16,6 +16,7 @@ struct StarshipListView: View {
                 content
             }
             .navigationTitle("Star Wars Starships")
+            .navigationBarTitleDisplayMode(.large)
             .background(StarWarsColors.background)
             .task {
                 viewModel.loadStarships()
@@ -44,7 +45,7 @@ struct StarshipListView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-        case .success(let starships, let page, let totalPages):
+        case .success(let starships):
             ScrollView {
                 LazyVStack(spacing: 12) {
                     ForEach(starships) { starship in
@@ -52,12 +53,12 @@ struct StarshipListView: View {
                             .padding(.horizontal)
                     }
 
-                    PaginationView(
-                        current: page,
-                        total: totalPages,
-                        onPrevious: viewModel.previousPage,
-                        onNext: viewModel.nextPage
+                    InfiniteScrollFooterView(
+                        isLoading: viewModel.isLoadingMore,
+                        canLoadMore: viewModel.canLoadMore,
+                        onLoadMore: viewModel.loadNextPageIfNeeded
                     )
+                    .id(viewModel.currentPage)
                 }
                 .padding(.top, 4)
             }

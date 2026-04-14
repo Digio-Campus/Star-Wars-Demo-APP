@@ -5,34 +5,43 @@ final class StarshipListViewModel: ObservableObject {
     enum UiState: Equatable {
         case loading
         case empty
-        case success(starships: [Starship], currentPage: Int, totalPages: Int)
+        case success(starships: [Starship])
         case error(message: String)
     }
 
     @Published private(set) var uiState: UiState = .loading
     @Published var searchQuery: String = "" {
         didSet {
-            currentPage = 1
+            resetPaging()
             publish()
         }
     }
     @Published private(set) var currentPage: Int = 1
+    @Published private(set) var isLoadingMore: Bool = false
 
     let itemsPerPage = 10
 
     private let repository: StarshipRepository
     private var allStarships: [Starship] = []
     private var refreshTask: Task<Void, Never>?
+    private var loadMoreTask: Task<Void, Never>?
+    private var lastLoadMorePageRequested: Int = 0
 
     init(repository: StarshipRepository) {
         self.repository = repository
     }
 
+    var canLoadMore: Bool {
+        currentPage < totalPages(for: filteredStarships)
+    }
+
     func loadStarships() {
         refreshTask?.cancel()
+        loadMoreTask?.cancel()
+        resetPaging()
         uiState = .loading
 
-        refreshTask = Task {
+        refreshTask = Task { @MainActor in
             let cached = await repository.getStarships()
             switch cached {
             case .success(let starships):
@@ -55,20 +64,33 @@ final class StarshipListViewModel: ObservableObject {
         }
     }
 
-    func nextPage() {
+    func loadNextPageIfNeeded() {
         let total = totalPages(for: filteredStarships)
         guard currentPage < total else { return }
-        currentPage += 1
-        publish()
-    }
+        guard !isLoadingMore else { return }
+        guard lastLoadMorePageRequested != currentPage else { return }
 
-    func previousPage() {
-        guard currentPage > 1 else { return }
-        currentPage -= 1
-        publish()
+        lastLoadMorePageRequested = currentPage
+        isLoadingMore = true
+
+        loadMoreTask?.cancel()
+        loadMoreTask = Task { @MainActor in
+            await Task.yield()
+            currentPage += 1
+            publish()
+            isLoadingMore = false
+        }
     }
 
     // MARK: - Private
+
+    private func resetPaging() {
+        currentPage = 1
+        lastLoadMorePageRequested = 0
+        isLoadingMore = false
+        loadMoreTask?.cancel()
+        loadMoreTask = nil
+    }
 
     private var filteredStarships: [Starship] {
         let base = allStarships.sorted { $0.name < $1.name }
@@ -102,8 +124,7 @@ final class StarshipListViewModel: ObservableObject {
             return
         }
 
-        let total = totalPages(for: starships)
         let pageStarships = pageSlice(for: starships)
-        uiState = .success(starships: pageStarships, currentPage: currentPage, totalPages: total)
+        uiState = .success(starships: pageStarships)
     }
 }

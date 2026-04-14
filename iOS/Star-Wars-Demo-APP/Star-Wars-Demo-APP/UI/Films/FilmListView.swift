@@ -17,6 +17,7 @@ struct FilmListView: View {
                 content
             }
             .navigationTitle("Star Wars Films")
+            .navigationBarTitleDisplayMode(.large)
             .background(StarWarsColors.background)
             .task {
                 viewModel.loadFilms()
@@ -48,7 +49,7 @@ struct FilmListView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-        case .success(let films, let page, let totalPages):
+        case .success(let films):
             ScrollView {
                 LazyVStack(spacing: 12) {
                     ForEach(films) { film in
@@ -59,12 +60,12 @@ struct FilmListView: View {
                         .padding(.horizontal)
                     }
 
-                    PaginationView(
-                        current: page,
-                        total: totalPages,
-                        onPrevious: viewModel.previousPage,
-                        onNext: viewModel.nextPage
+                    InfiniteScrollFooterView(
+                        isLoading: viewModel.isLoadingMore,
+                        canLoadMore: viewModel.canLoadMore,
+                        onLoadMore: viewModel.loadNextPageIfNeeded
                     )
+                    .id(viewModel.currentPage)
                 }
                 .padding(.top, 4)
             }

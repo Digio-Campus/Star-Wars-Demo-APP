@@ -5,34 +5,43 @@ final class PersonListViewModel: ObservableObject {
     enum UiState: Equatable {
         case loading
         case empty
-        case success(people: [Person], currentPage: Int, totalPages: Int)
+        case success(people: [Person])
         case error(message: String)
     }
 
     @Published private(set) var uiState: UiState = .loading
     @Published var searchQuery: String = "" {
         didSet {
-            currentPage = 1
+            resetPaging()
             publish()
         }
     }
     @Published private(set) var currentPage: Int = 1
+    @Published private(set) var isLoadingMore: Bool = false
 
     let itemsPerPage = 10
 
     private let repository: PersonRepository
     private var allPeople: [Person] = []
     private var refreshTask: Task<Void, Never>?
+    private var loadMoreTask: Task<Void, Never>?
+    private var lastLoadMorePageRequested: Int = 0
 
     init(repository: PersonRepository) {
         self.repository = repository
     }
 
+    var canLoadMore: Bool {
+        currentPage < totalPages(for: filteredPeople)
+    }
+
     func loadPeople() {
         refreshTask?.cancel()
+        loadMoreTask?.cancel()
+        resetPaging()
         uiState = .loading
 
-        refreshTask = Task {
+        refreshTask = Task { @MainActor in
             let cached = await repository.getPeople()
             switch cached {
             case .success(let people):
@@ -55,20 +64,33 @@ final class PersonListViewModel: ObservableObject {
         }
     }
 
-    func nextPage() {
+    func loadNextPageIfNeeded() {
         let total = totalPages(for: filteredPeople)
         guard currentPage < total else { return }
-        currentPage += 1
-        publish()
-    }
+        guard !isLoadingMore else { return }
+        guard lastLoadMorePageRequested != currentPage else { return }
 
-    func previousPage() {
-        guard currentPage > 1 else { return }
-        currentPage -= 1
-        publish()
+        lastLoadMorePageRequested = currentPage
+        isLoadingMore = true
+
+        loadMoreTask?.cancel()
+        loadMoreTask = Task { @MainActor in
+            await Task.yield()
+            currentPage += 1
+            publish()
+            isLoadingMore = false
+        }
     }
 
     // MARK: - Private
+
+    private func resetPaging() {
+        currentPage = 1
+        lastLoadMorePageRequested = 0
+        isLoadingMore = false
+        loadMoreTask?.cancel()
+        loadMoreTask = nil
+    }
 
     private var filteredPeople: [Person] {
         let base = allPeople.sorted { $0.name < $1.name }
@@ -102,8 +124,7 @@ final class PersonListViewModel: ObservableObject {
             return
         }
 
-        let total = totalPages(for: people)
         let pagePeople = pageSlice(for: people)
-        uiState = .success(people: pagePeople, currentPage: currentPage, totalPages: total)
+        uiState = .success(people: pagePeople)
     }
 }

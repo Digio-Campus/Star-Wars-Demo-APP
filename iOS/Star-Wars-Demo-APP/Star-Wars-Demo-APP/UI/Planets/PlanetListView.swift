@@ -16,6 +16,7 @@ struct PlanetListView: View {
                 content
             }
             .navigationTitle("Star Wars Planets")
+            .navigationBarTitleDisplayMode(.large)
             .background(StarWarsColors.background)
             .task {
                 viewModel.loadPlanets()
@@ -44,7 +45,7 @@ struct PlanetListView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-        case .success(let planets, let page, let totalPages):
+        case .success(let planets):
             ScrollView {
                 LazyVStack(spacing: 12) {
                     ForEach(planets) { planet in
@@ -52,12 +53,12 @@ struct PlanetListView: View {
                             .padding(.horizontal)
                     }
 
-                    PaginationView(
-                        current: page,
-                        total: totalPages,
-                        onPrevious: viewModel.previousPage,
-                        onNext: viewModel.nextPage
+                    InfiniteScrollFooterView(
+                        isLoading: viewModel.isLoadingMore,
+                        canLoadMore: viewModel.canLoadMore,
+                        onLoadMore: viewModel.loadNextPageIfNeeded
                     )
+                    .id(viewModel.currentPage)
                 }
                 .padding(.top, 4)
             }

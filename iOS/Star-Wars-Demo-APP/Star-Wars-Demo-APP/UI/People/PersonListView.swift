@@ -16,6 +16,7 @@ struct PersonListView: View {
                 content
             }
             .navigationTitle("Star Wars People")
+            .navigationBarTitleDisplayMode(.large)
             .background(StarWarsColors.background)
             .task {
                 viewModel.loadPeople()
@@ -44,7 +45,7 @@ struct PersonListView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-        case .success(let people, let page, let totalPages):
+        case .success(let people):
             ScrollView {
                 LazyVStack(spacing: 12) {
                     ForEach(people) { person in
@@ -52,12 +53,12 @@ struct PersonListView: View {
                             .padding(.horizontal)
                     }
 
-                    PaginationView(
-                        current: page,
-                        total: totalPages,
-                        onPrevious: viewModel.previousPage,
-                        onNext: viewModel.nextPage
+                    InfiniteScrollFooterView(
+                        isLoading: viewModel.isLoadingMore,
+                        canLoadMore: viewModel.canLoadMore,
+                        onLoadMore: viewModel.loadNextPageIfNeeded
                     )
+                    .id(viewModel.currentPage)
                 }
                 .padding(.top, 4)
             }
