@@ -14,6 +14,9 @@ struct FullWidthSection<Content: View>: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(background)
+            .background {
+                background
+                    .ignoresSafeArea(.container, edges: [.horizontal])
+            }
     }
 }

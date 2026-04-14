@@ -29,7 +29,10 @@ struct StarshipDetailView: View {
                 .padding(.vertical, 16)
             }
         }
-        .background(StarWarsColors.background)
+        .background {
+            StarWarsColors.background
+                .ignoresSafeArea()
+        }
         .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
         .task {
