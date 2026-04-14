@@ -1,10 +1,10 @@
 import SwiftUI
 
-struct FilmDetailView: View {
-    @StateObject private var viewModel: FilmDetailViewModel
+struct StarshipDetailView: View {
+    @StateObject private var viewModel: StarshipDetailViewModel
 
-    init(repository: FilmRepository, filmId: Int) {
-        _viewModel = StateObject(wrappedValue: FilmDetailViewModel(filmId: filmId, repository: repository))
+    init(repository: StarshipRepository, starshipId: Int) {
+        _viewModel = StateObject(wrappedValue: StarshipDetailViewModel(starshipId: starshipId, repository: repository))
     }
 
     var body: some View {
@@ -20,12 +20,11 @@ struct FilmDetailView: View {
                 }
                 .frame(maxWidth: .infinity, minHeight: 300)
 
-            case .success(let film):
+            case .success(let starship):
                 VStack(spacing: 12) {
-                    headerSection(film)
-                    openingCrawlSection(film)
-                    infoSection(film)
-                    statsSection(film)
+                    headerSection(starship)
+                    specsSection(starship)
+                    statsSection(starship)
                 }
                 .padding(.vertical, 16)
             }
@@ -39,68 +38,53 @@ struct FilmDetailView: View {
     }
 
     private var navigationTitle: String {
-        if case .success(let film) = viewModel.uiState {
-            return film.title
+        if case .success(let starship) = viewModel.uiState {
+            return starship.name
         }
-        return "Film Detail"
+        return "Starship"
     }
 
-    private func headerSection(_ film: Film) -> some View {
+    private func headerSection(_ starship: Starship) -> some View {
         FullWidthSection {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Episode \(film.episodeId.toRomanNumeral())")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(StarWarsColors.primary)
-
-                Text(film.title)
+                Text(starship.name)
                     .font(.title2.weight(.bold))
-            }
-        }
-    }
 
-    private func openingCrawlSection(_ film: Film) -> some View {
-        FullWidthSection {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Opening Crawl")
-                    .font(.headline)
-                    .foregroundStyle(StarWarsColors.primary)
-
-                Text(film.openingCrawl)
-                    .font(.body)
+                Text(starship.model)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
         }
     }
 
-    private func infoSection(_ film: Film) -> some View {
+    private func specsSection(_ starship: Starship) -> some View {
         FullWidthSection {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Info")
+                Text("Specifications")
                     .font(.headline)
                     .foregroundStyle(StarWarsColors.primary)
 
                 Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
-                    GridRow { label("Director"); value(film.director) }
-                    GridRow { label("Producer"); value(film.producer) }
-                    GridRow { label("Release"); value(film.releaseDate) }
+                    GridRow { label("Class"); value(starship.starshipClass) }
+                    GridRow { label("Manufacturer"); value(starship.manufacturer) }
+                    GridRow { label("Crew"); value(starship.crew) }
+                    GridRow { label("Passengers"); value(starship.passengers) }
+                    GridRow { label("Cost"); value(starship.costInCredits) }
+                    GridRow { label("Hyperdrive"); value(starship.hyperdriveRating) }
                 }
             }
         }
     }
 
-    private func statsSection(_ film: Film) -> some View {
+    private func statsSection(_ starship: Starship) -> some View {
         FullWidthSection {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Stats")
                     .font(.headline)
                     .foregroundStyle(StarWarsColors.primary)
 
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
-                    statCard("Characters", film.charactersCount)
-                    statCard("Planets", film.planetsCount)
-                    statCard("Starships", film.starshipsCount)
-                    statCard("Vehicles", film.vehiclesCount)
-                    statCard("Species", film.speciesCount)
+                LazyVGrid(columns: [GridItem(.flexible())], spacing: 12) {
+                    statCard("Films", starship.filmsCount)
                 }
             }
         }

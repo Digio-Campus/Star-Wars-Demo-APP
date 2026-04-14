@@ -1,10 +1,10 @@
 import SwiftUI
 
-struct FilmDetailView: View {
-    @StateObject private var viewModel: FilmDetailViewModel
+struct PersonDetailView: View {
+    @StateObject private var viewModel: PersonDetailViewModel
 
-    init(repository: FilmRepository, filmId: Int) {
-        _viewModel = StateObject(wrappedValue: FilmDetailViewModel(filmId: filmId, repository: repository))
+    init(repository: PersonRepository, personId: Int) {
+        _viewModel = StateObject(wrappedValue: PersonDetailViewModel(personId: personId, repository: repository))
     }
 
     var body: some View {
@@ -20,12 +20,11 @@ struct FilmDetailView: View {
                 }
                 .frame(maxWidth: .infinity, minHeight: 300)
 
-            case .success(let film):
+            case .success(let person):
                 VStack(spacing: 12) {
-                    headerSection(film)
-                    openingCrawlSection(film)
-                    infoSection(film)
-                    statsSection(film)
+                    headerSection(person)
+                    detailsSection(person)
+                    statsSection(person)
                 }
                 .padding(.vertical, 16)
             }
@@ -39,56 +38,42 @@ struct FilmDetailView: View {
     }
 
     private var navigationTitle: String {
-        if case .success(let film) = viewModel.uiState {
-            return film.title
+        if case .success(let person) = viewModel.uiState {
+            return person.name
         }
-        return "Film Detail"
+        return "Person"
     }
 
-    private func headerSection(_ film: Film) -> some View {
+    private func headerSection(_ person: Person) -> some View {
         FullWidthSection {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Episode \(film.episodeId.toRomanNumeral())")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(StarWarsColors.primary)
-
-                Text(film.title)
+                Text(person.name)
                     .font(.title2.weight(.bold))
-            }
-        }
-    }
 
-    private func openingCrawlSection(_ film: Film) -> some View {
-        FullWidthSection {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Opening Crawl")
-                    .font(.headline)
-                    .foregroundStyle(StarWarsColors.primary)
-
-                Text(film.openingCrawl)
-                    .font(.body)
+                Text("\(person.gender) · Born \(person.birthYear)")
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
         }
     }
 
-    private func infoSection(_ film: Film) -> some View {
+    private func detailsSection(_ person: Person) -> some View {
         FullWidthSection {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Info")
+                Text("Details")
                     .font(.headline)
                     .foregroundStyle(StarWarsColors.primary)
 
                 Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
-                    GridRow { label("Director"); value(film.director) }
-                    GridRow { label("Producer"); value(film.producer) }
-                    GridRow { label("Release"); value(film.releaseDate) }
+                    GridRow { label("Height"); value(person.height) }
+                    GridRow { label("Mass"); value(person.mass) }
+                    GridRow { label("Homeworld"); value(person.homeworldURL) }
                 }
             }
         }
     }
 
-    private func statsSection(_ film: Film) -> some View {
+    private func statsSection(_ person: Person) -> some View {
         FullWidthSection {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Stats")
@@ -96,11 +81,10 @@ struct FilmDetailView: View {
                     .foregroundStyle(StarWarsColors.primary)
 
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
-                    statCard("Characters", film.charactersCount)
-                    statCard("Planets", film.planetsCount)
-                    statCard("Starships", film.starshipsCount)
-                    statCard("Vehicles", film.vehiclesCount)
-                    statCard("Species", film.speciesCount)
+                    statCard("Films", person.filmsCount)
+                    statCard("Starships", person.starshipsCount)
+                    statCard("Vehicles", person.vehiclesCount)
+                    statCard("Species", person.speciesCount)
                 }
             }
         }

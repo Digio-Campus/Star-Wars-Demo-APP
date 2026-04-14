@@ -21,6 +21,9 @@ struct StarshipListView: View {
             .task {
                 viewModel.loadStarships()
             }
+            .navigationDestination(for: Int.self) { starshipId in
+                StarshipDetailView(repository: repository, starshipId: starshipId)
+            }
         }
     }
 
@@ -49,8 +52,11 @@ struct StarshipListView: View {
             ScrollView {
                 LazyVStack(spacing: 12) {
                     ForEach(starships) { starship in
-                        StarshipCardView(starship: starship)
-                            .padding(.horizontal)
+                        NavigationLink(value: starship.id) {
+                            StarshipCardView(starship: starship)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal)
                     }
 
                     InfiniteScrollFooterView(

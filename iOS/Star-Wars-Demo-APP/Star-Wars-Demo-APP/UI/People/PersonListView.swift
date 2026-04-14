@@ -21,6 +21,9 @@ struct PersonListView: View {
             .task {
                 viewModel.loadPeople()
             }
+            .navigationDestination(for: Int.self) { personId in
+                PersonDetailView(repository: repository, personId: personId)
+            }
         }
     }
 
@@ -49,8 +52,11 @@ struct PersonListView: View {
             ScrollView {
                 LazyVStack(spacing: 12) {
                     ForEach(people) { person in
-                        PersonCardView(person: person)
-                            .padding(.horizontal)
+                        NavigationLink(value: person.id) {
+                            PersonCardView(person: person)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal)
                     }
 
                     InfiniteScrollFooterView(

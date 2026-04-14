@@ -21,6 +21,9 @@ struct PlanetListView: View {
             .task {
                 viewModel.loadPlanets()
             }
+            .navigationDestination(for: Int.self) { planetId in
+                PlanetDetailView(repository: repository, planetId: planetId)
+            }
         }
     }
 
@@ -49,8 +52,11 @@ struct PlanetListView: View {
             ScrollView {
                 LazyVStack(spacing: 12) {
                     ForEach(planets) { planet in
-                        PlanetCardView(planet: planet)
-                            .padding(.horizontal)
+                        NavigationLink(value: planet.id) {
+                            PlanetCardView(planet: planet)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal)
                     }
 
                     InfiniteScrollFooterView(
