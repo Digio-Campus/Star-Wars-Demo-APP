@@ -20,6 +20,7 @@ navigationCompose = "2.8.7"
 hiltNavigationCompose = "1.2.0"
 splashscreen = "1.0.1"
 material = "1.12.0"
+datastore = "1.1.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -55,6 +56,12 @@ room-compiler = { group = "androidx.room", name = "room-compiler", version.ref =
 
 # Navigation
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+
+# DataStore
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+
+# Compose icons
+androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 
 # DI (Hilt)
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }

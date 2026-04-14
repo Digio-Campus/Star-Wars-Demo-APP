@@ -4,6 +4,9 @@ import android.content.Context
 import androidx.room.Room
 import com.dam.starwarsapp.data.local.AppDatabase
 import com.dam.starwarsapp.data.local.FilmDao
+import com.dam.starwarsapp.data.local.PersonDao
+import com.dam.starwarsapp.data.local.PlanetDao
+import com.dam.starwarsapp.data.local.StarshipDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,4 +29,13 @@ object DatabaseModule {
 
     @Provides
     fun provideFilmDao(db: AppDatabase): FilmDao = db.filmDao()
+
+    @Provides
+    fun providePersonDao(db: AppDatabase): PersonDao = db.personDao()
+
+    @Provides
+    fun providePlanetDao(db: AppDatabase): PlanetDao = db.planetDao()
+
+    @Provides
+    fun provideStarshipDao(db: AppDatabase): StarshipDao = db.starshipDao()
 }
