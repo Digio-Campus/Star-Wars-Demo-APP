@@ -1,9 +1,9 @@
-package com.dam.starwarsapp.ui.screens.films
+package com.dam.starwarsapp.ui.screens.planets
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dam.starwarsapp.domain.model.Film
-import com.dam.starwarsapp.domain.repository.FilmRepository
+import com.dam.starwarsapp.domain.model.Planet
+import com.dam.starwarsapp.domain.repository.PlanetRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,11 +15,11 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class FilmsViewModel @Inject constructor(
-    private val repository: FilmRepository,
+class PlanetsViewModel @Inject constructor(
+    private val repository: PlanetRepository,
 ) : ViewModel() {
 
-    private val pageSize = 3
+    private val pageSize = 15
 
     private val query = MutableStateFlow("")
     private val visibleCount = MutableStateFlow(pageSize)
@@ -28,7 +28,7 @@ class FilmsViewModel @Inject constructor(
     private val isLoadingMore = MutableStateFlow(false)
     private val refreshError = MutableStateFlow<String?>(null)
 
-    private val films: StateFlow<List<Film>> = repository.observeFilms()
+    private val planets: StateFlow<List<Planet>> = repository.observePlanets()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val loadingState = combine(
@@ -39,8 +39,8 @@ class FilmsViewModel @Inject constructor(
         Triple(refreshing, loadingMore, error)
     }
 
-    val uiState: StateFlow<FilmsUiState> = combine(
-        films,
+    val uiState: StateFlow<PlanetsUiState> = combine(
+        planets,
         query,
         visibleCount,
         loadingState,
@@ -49,22 +49,22 @@ class FilmsViewModel @Inject constructor(
 
         val normalizedQuery = q.trim()
         val filtered = if (normalizedQuery.isBlank()) all else all.filter {
-            it.title.contains(normalizedQuery, ignoreCase = true)
+            it.name.contains(normalizedQuery, ignoreCase = true)
         }
 
         val safeVisible = visible.coerceAtLeast(pageSize).coerceAtMost(filtered.size)
         val items = filtered.take(safeVisible)
 
-        FilmsUiState(
+        PlanetsUiState(
             query = q,
             totalResults = filtered.size,
-            films = items,
+            planets = items,
             isRefreshing = refreshing,
             isLoadingMore = loadingMore,
             canLoadMore = safeVisible < filtered.size,
             refreshError = error,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FilmsUiState())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PlanetsUiState())
 
     init {
         refresh()
@@ -91,17 +91,17 @@ class FilmsViewModel @Inject constructor(
         viewModelScope.launch {
             isRefreshing.value = true
             refreshError.value = null
-            val result = repository.refreshFilms()
+            val result = repository.refreshPlanets()
             refreshError.value = result.exceptionOrNull()?.message
             isRefreshing.value = false
         }
     }
 }
 
-data class FilmsUiState(
+data class PlanetsUiState(
     val query: String = "",
     val totalResults: Int = 0,
-    val films: List<Film> = emptyList(),
+    val planets: List<Planet> = emptyList(),
     val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val canLoadMore: Boolean = false,

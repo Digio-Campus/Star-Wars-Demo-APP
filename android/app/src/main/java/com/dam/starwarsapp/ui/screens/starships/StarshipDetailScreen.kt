@@ -1,8 +1,7 @@
-package com.dam.starwarsapp.ui.screens.detail
+package com.dam.starwarsapp.ui.screens.starships
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,18 +25,18 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FilmDetailScreen(
-    viewModel: FilmDetailViewModel,
+fun StarshipDetailScreen(
+    viewModel: StarshipDetailViewModel,
     onBack: () -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
-    val film = state.film
+    val starship = state.starship
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
-                title = { Text(film?.title ?: "Película") },
+                title = { Text(starship?.name ?: "Nave") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
@@ -54,7 +53,7 @@ fun FilmDetailScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            if (film == null) {
+            if (starship == null) {
                 Text(
                     text = "No disponible en caché. Vuelve y actualiza.",
                     color = MaterialTheme.colorScheme.error,
@@ -62,25 +61,21 @@ fun FilmDetailScreen(
                 return@Column
             }
 
-            Text(
-                text = "Episodio ${film.episodeId}",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Text(text = "Estreno: ${film.releaseDate}")
-            Text(text = "Director: ${film.director}")
-            Text(text = "Productor: ${film.producer}")
-
-            Spacer(Modifier.padding(4.dp))
-            Text(
-                text = "Introducción",
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                text = film.openingCrawl,
-                modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            InfoRow(label = "Modelo", value = starship.model)
+            InfoRow(label = "Fabricante", value = starship.manufacturer)
+            InfoRow(label = "Clase", value = starship.starshipClass)
+            InfoRow(label = "Coste", value = starship.costInCredits)
+            InfoRow(label = "Longitud", value = starship.length)
+            InfoRow(label = "Tripulación", value = starship.crew)
+            InfoRow(label = "Pasajeros", value = starship.passengers)
         }
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(text = label, style = MaterialTheme.typography.labelLarge)
+        Text(text = value, style = MaterialTheme.typography.bodyMedium)
     }
 }

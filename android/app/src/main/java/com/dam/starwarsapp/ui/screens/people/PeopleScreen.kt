@@ -1,4 +1,4 @@
-package com.dam.starwarsapp.ui.screens.films
+package com.dam.starwarsapp.ui.screens.people
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,21 +38,21 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FilmsScreen(
-    viewModel: FilmsViewModel,
-    onFilmClick: (Int) -> Unit,
+fun PeopleScreen(
+    viewModel: PeopleViewModel,
+    onPersonClick: (Int) -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val listState = rememberLazyListState()
 
-    LaunchedEffect(listState, state.films.size, state.canLoadMore, state.isLoadingMore) {
+    LaunchedEffect(listState, state.people.size, state.canLoadMore, state.isLoadingMore) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .collect { lastVisibleIndex ->
                 if (lastVisibleIndex == null) return@collect
                 val shouldLoadMore =
-                    lastVisibleIndex >= state.films.size - 3 && state.canLoadMore && !state.isLoadingMore
+                    lastVisibleIndex >= state.people.size - 3 && state.canLoadMore && !state.isLoadingMore
                 if (shouldLoadMore) viewModel.loadMore()
             }
     }
@@ -61,7 +62,7 @@ fun FilmsScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             LargeTopAppBar(
-                title = { Text("Películas") },
+                title = { Text("Personajes") },
                 scrollBehavior = scrollBehavior,
                 actions = {
                     IconButton(onClick = viewModel::refresh) {
@@ -103,7 +104,7 @@ fun FilmsScreen(
             }
 
             Text(
-                text = "Mostrando ${state.films.size}/${state.totalResults}",
+                text = "Mostrando ${state.people.size}/${state.totalResults}",
                 style = MaterialTheme.typography.labelLarge,
             )
 
@@ -113,29 +114,33 @@ fun FilmsScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(
-                    items = state.films,
+                    items = state.people,
                     key = { it.id },
-                ) { film ->
+                ) { person ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onFilmClick(film.id) },
+                            .clickable { onPersonClick(person.id) },
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = film.title,
+                                text = person.name,
                                 style = MaterialTheme.typography.titleLarge,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
                             Spacer(Modifier.padding(2.dp))
                             Text(
-                                text = "Episodio ${film.episodeId} • ${film.releaseDate}",
+                                text = "${person.gender} • ${person.birthYear}",
                                 style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                             Text(
-                                text = "Director: ${film.director}",
+                                text = "Altura: ${person.height} • Masa: ${person.mass}",
                                 style = MaterialTheme.typography.bodySmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                     }
@@ -148,6 +153,7 @@ fun FilmsScreen(
                                 .fillMaxWidth()
                                 .padding(vertical = 8.dp),
                             horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             CircularProgressIndicator()
                         }
