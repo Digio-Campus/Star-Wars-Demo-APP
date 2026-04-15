@@ -30,21 +30,18 @@ struct FilmDetailView: View {
                     .padding(.vertical, 60)
 
                 case .success(let film):
-                    VStack(spacing: 16) {
-                        headerSection(film)
-                            .padding(.horizontal, 16)
-                            .padding(.top, 8)
+                    headerSection(film)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
 
-                        openingCrawlSection(film)
+                    openingCrawlSection(film)
 
-                        infoSection(film)
-                            .padding(.horizontal, 16)
+                    infoSection(film)
+                        .padding(.horizontal, 16)
 
-                        statsSection(film)
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 16)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    statsSection(film)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
                 }
             }
             .frame(maxWidth: .infinity)
