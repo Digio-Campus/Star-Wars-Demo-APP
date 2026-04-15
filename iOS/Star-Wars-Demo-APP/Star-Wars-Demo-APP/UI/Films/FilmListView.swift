@@ -73,7 +73,7 @@ struct FilmListView: View {
                 }
                 .padding(.top, 4)
             }
-            .coordinateSpace(name: scrollSpaceName)
+            .coordinateSpace(.named(scrollSpaceName))
             .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
                 updateTitleCollapse(with: offset)
             }

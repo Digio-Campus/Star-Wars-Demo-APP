@@ -16,13 +16,19 @@ struct ScrollOffsetReader: View {
     let coordinateSpaceName: String
 
     var body: some View {
-        GeometryReader { proxy in
-            Color.clear
-                .preference(
-                    key: ScrollOffsetPreferenceKey.self,
-                    value: proxy.frame(in: .named(coordinateSpaceName)).minY
-                )
-        }
-        .frame(height: 0)
+        // Using a 1pt sentinel avoids cases where a 0-height GeometryReader never
+        // participates in layout, resulting in a constant (non-updating) frame.
+        Color.clear
+            .frame(height: 1)
+            .background {
+                GeometryReader { proxy in
+                    Color.clear
+                        .preference(
+                            key: ScrollOffsetPreferenceKey.self,
+                            value: proxy.frame(in: .named(coordinateSpaceName)).minY
+                        )
+                }
+            }
+            .allowsHitTesting(false)
     }
 }
