@@ -2,11 +2,10 @@ import SwiftUI
 
 struct FilmDetailView: View {
     @StateObject private var viewModel: FilmDetailViewModel
-    @State private var isNavigationTitleCollapsed = false
+
+    @State private var scrollOffset: CGFloat = 0
 
     private static let scrollSpaceName = "film-detail-scroll"
-    private static let titleCollapseAt: CGFloat = -32
-    private static let titleExpandAt: CGFloat = -8
 
     init(repository: FilmRepository, filmId: Int) {
         _viewModel = StateObject(wrappedValue: FilmDetailViewModel(filmId: filmId, repository: repository))
@@ -14,39 +13,47 @@ struct FilmDetailView: View {
 
     var body: some View {
         ScrollView {
-            ScrollOffsetReader(coordinateSpaceName: Self.scrollSpaceName)
+            VStack(spacing: 0) {
+                ScrollOffsetReader(coordinateSpaceName: Self.scrollSpaceName)
 
-            switch viewModel.uiState {
-            case .loading:
-                LoadingView()
+                switch viewModel.uiState {
+                case .loading:
+                    LoadingView()
+                        .frame(maxWidth: .infinity, minHeight: 300)
+
+                case .error(let message):
+                    ErrorView(message: message) {
+                        viewModel.load()
+                    }
                     .frame(maxWidth: .infinity, minHeight: 300)
 
-            case .error(let message):
-                ErrorView(message: message) {
-                    viewModel.load()
+                case .success(let film):
+                    VStack(spacing: 12) {
+                        headerSection(film)
+                        openingCrawlSection(film)
+                        infoSection(film)
+                        statsSection(film)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 16)
                 }
-                .frame(maxWidth: .infinity, minHeight: 300)
-
-            case .success(let film):
-                VStack(spacing: 12) {
-                    headerSection(film)
-                    openingCrawlSection(film)
-                    infoSection(film)
-                    statsSection(film)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.vertical, 16)
             }
+            .frame(maxWidth: .infinity)
         }
         .coordinateSpace(.named(Self.scrollSpaceName))
         .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
-            updateTitleCollapse(with: offset)
+            // Offset is ~0 at rest and becomes negative as the user scrolls down.
+            let effectiveOffset = min(offset, 0)
+            // Gate updates slightly so the nav title can animate smoothly without per-frame churn.
+            if abs(scrollOffset - effectiveOffset) > 1 {
+                scrollOffset = effectiveOffset
+            }
         }
         .background {
             StarWarsColors.background
                 .ignoresSafeArea()
         }
-        .navigationTitle(navigationTitle)
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
@@ -65,14 +72,25 @@ struct FilmDetailView: View {
         return "Film Detail"
     }
 
+    private var titleCollapseProgress: CGFloat {
+        // 0 = fully expanded, 1 = fully collapsed
+        let collapseDistance: CGFloat = 64
+        return min(max((-scrollOffset) / collapseDistance, 0), 1)
+    }
+
     private var collapsibleNavigationTitle: some View {
-        Text(navigationTitle)
+        let scaleExpanded: CGFloat = 1.35
+        let scaleCollapsed: CGFloat = 0.95
+        let scale = scaleExpanded + (scaleCollapsed - scaleExpanded) * titleCollapseProgress
+
+        return Text(navigationTitle)
             .font(.headline.weight(.semibold))
             .foregroundStyle(.primary)
             .lineLimit(1)
             .minimumScaleFactor(0.75)
-            .scaleEffect(isNavigationTitleCollapsed ? 1.0 : 1.25)
-            .animation(.easeInOut(duration: 0.22), value: isNavigationTitleCollapsed)
+            .scaleEffect(scale)
+            .offset(y: (1 - titleCollapseProgress) * 4)
+            .animation(.easeInOut(duration: 0.18), value: scale)
             .accessibilityAddTraits(.isHeader)
     }
 
@@ -90,22 +108,24 @@ struct FilmDetailView: View {
     }
 
     private func openingCrawlSection(_ film: Film) -> some View {
-        FullWidthCrawlSection {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Opening Crawl")
-                    .font(.headline)
-                    .foregroundStyle(StarWarsColors.primary)
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Opening Crawl")
+                .font(.headline)
+                .foregroundStyle(StarWarsColors.primary)
 
-                Text(film.openingCrawl)
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .layoutPriority(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            Text(film.openingCrawl)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 12)
+        .background {
+            StarWarsColors.surface
+                .ignoresSafeArea(.container, edges: [.horizontal])
+        }
+        .ignoresSafeArea(.container, edges: [.horizontal])
     }
 
     private func infoSection(_ film: Film) -> some View {
@@ -174,11 +194,4 @@ struct FilmDetailView: View {
         }
     }
 
-    private func updateTitleCollapse(with offset: CGFloat) {
-        if !isNavigationTitleCollapsed, offset < Self.titleCollapseAt {
-            isNavigationTitleCollapsed = true
-        } else if isNavigationTitleCollapsed, offset > Self.titleExpandAt {
-            isNavigationTitleCollapsed = false
-        }
-    }
 }
