@@ -71,6 +71,8 @@ struct FilmDetailView: View {
                 Text(film.openingCrawl)
                     .font(.body)
                     .foregroundStyle(.secondary)
+                    .lineLimit(nil)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
