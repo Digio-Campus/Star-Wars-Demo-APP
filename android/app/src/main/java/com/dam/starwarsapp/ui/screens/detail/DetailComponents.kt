@@ -105,25 +105,31 @@ fun DetailFieldRow(
     value: String,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            text = label,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f),
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = value.ifBlank { "—" },
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 3,
-            overflow = TextOverflow.Ellipsis,
-        )
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val labelWidth = (maxWidth * 0.38f)
+            .coerceAtLeast(96.dp)
+            .coerceAtMost(180.dp)
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = label,
+                modifier = Modifier.width(labelWidth),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = value.ifBlank { "—" },
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                softWrap = true,
+            )
+        }
     }
 }
 

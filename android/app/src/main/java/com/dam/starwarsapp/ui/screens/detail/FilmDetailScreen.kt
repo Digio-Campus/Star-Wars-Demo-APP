@@ -76,6 +76,7 @@ fun FilmDetailScreen(
                     DetailSectionCard(title = "Crawl") {
                         Text(
                             text = film.openingCrawl.asDisplayValue(),
+                            modifier = Modifier.fillMaxWidth(),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
@@ -94,6 +95,7 @@ fun FilmDetailScreen(
             DetailSectionCard(title = "Crawl") {
                 Text(
                     text = film.openingCrawl.asDisplayValue(),
+                    modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
