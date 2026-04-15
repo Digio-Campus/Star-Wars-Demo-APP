@@ -4,6 +4,9 @@ struct FilmListView: View {
     private let repository: FilmRepository
 
     @StateObject private var viewModel: FilmListViewModel
+    @State private var isTitleCollapsed = false
+
+    private let scrollSpaceName = "film-list-scroll"
 
     init(repository: FilmRepository) {
         self.repository = repository
@@ -17,7 +20,7 @@ struct FilmListView: View {
                 content
             }
             .navigationTitle("Star Wars Films")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(isTitleCollapsed ? .inline : .large)
             .background(StarWarsColors.background)
             .task {
                 viewModel.loadFilms()
@@ -51,6 +54,8 @@ struct FilmListView: View {
 
         case .success(let films):
             ScrollView {
+                ScrollOffsetReader(coordinateSpaceName: scrollSpaceName)
+
                 LazyVStack(spacing: 12) {
                     ForEach(films) { film in
                         NavigationLink(value: film.id) {
@@ -65,9 +70,28 @@ struct FilmListView: View {
                         canLoadMore: viewModel.canLoadMore,
                         onLoadMore: viewModel.loadNextPageIfNeeded
                     )
-                    .id(viewModel.currentPage)
                 }
                 .padding(.top, 4)
+            }
+            .coordinateSpace(name: scrollSpaceName)
+            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
+                updateTitleCollapse(with: offset)
+            }
+        }
+    }
+
+    private func updateTitleCollapse(with offset: CGFloat) {
+        // Hysteresis avoids flip-flopping if the user hovers near the threshold.
+        let collapseAt: CGFloat = -32
+        let expandAt: CGFloat = -8
+
+        if !isTitleCollapsed, offset < collapseAt {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isTitleCollapsed = true
+            }
+        } else if isTitleCollapsed, offset > expandAt {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isTitleCollapsed = false
             }
         }
     }

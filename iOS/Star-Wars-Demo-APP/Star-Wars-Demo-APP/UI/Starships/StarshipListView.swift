@@ -3,6 +3,9 @@ import SwiftUI
 struct StarshipListView: View {
     private let repository: StarshipRepository
     @StateObject private var viewModel: StarshipListViewModel
+    @State private var isTitleCollapsed = false
+
+    private let scrollSpaceName = "starship-list-scroll"
 
     init(repository: StarshipRepository) {
         self.repository = repository
@@ -16,7 +19,7 @@ struct StarshipListView: View {
                 content
             }
             .navigationTitle("Star Wars Starships")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(isTitleCollapsed ? .inline : .large)
             .background(StarWarsColors.background)
             .task {
                 viewModel.loadStarships()
@@ -50,6 +53,8 @@ struct StarshipListView: View {
 
         case .success(let starships):
             ScrollView {
+                ScrollOffsetReader(coordinateSpaceName: scrollSpaceName)
+
                 LazyVStack(spacing: 12) {
                     ForEach(starships) { starship in
                         NavigationLink(value: starship.id) {
@@ -64,9 +69,27 @@ struct StarshipListView: View {
                         canLoadMore: viewModel.canLoadMore,
                         onLoadMore: viewModel.loadNextPageIfNeeded
                     )
-                    .id(viewModel.currentPage)
                 }
                 .padding(.top, 4)
+            }
+            .coordinateSpace(name: scrollSpaceName)
+            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
+                updateTitleCollapse(with: offset)
+            }
+        }
+    }
+
+    private func updateTitleCollapse(with offset: CGFloat) {
+        let collapseAt: CGFloat = -32
+        let expandAt: CGFloat = -8
+
+        if !isTitleCollapsed, offset < collapseAt {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isTitleCollapsed = true
+            }
+        } else if isTitleCollapsed, offset > expandAt {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isTitleCollapsed = false
             }
         }
     }

@@ -3,6 +3,9 @@ import SwiftUI
 struct PlanetListView: View {
     private let repository: PlanetRepository
     @StateObject private var viewModel: PlanetListViewModel
+    @State private var isTitleCollapsed = false
+
+    private let scrollSpaceName = "planet-list-scroll"
 
     init(repository: PlanetRepository) {
         self.repository = repository
@@ -16,7 +19,7 @@ struct PlanetListView: View {
                 content
             }
             .navigationTitle("Star Wars Planets")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(isTitleCollapsed ? .inline : .large)
             .background(StarWarsColors.background)
             .task {
                 viewModel.loadPlanets()
@@ -50,6 +53,8 @@ struct PlanetListView: View {
 
         case .success(let planets):
             ScrollView {
+                ScrollOffsetReader(coordinateSpaceName: scrollSpaceName)
+
                 LazyVStack(spacing: 12) {
                     ForEach(planets) { planet in
                         NavigationLink(value: planet.id) {
@@ -64,9 +69,27 @@ struct PlanetListView: View {
                         canLoadMore: viewModel.canLoadMore,
                         onLoadMore: viewModel.loadNextPageIfNeeded
                     )
-                    .id(viewModel.currentPage)
                 }
                 .padding(.top, 4)
+            }
+            .coordinateSpace(name: scrollSpaceName)
+            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
+                updateTitleCollapse(with: offset)
+            }
+        }
+    }
+
+    private func updateTitleCollapse(with offset: CGFloat) {
+        let collapseAt: CGFloat = -32
+        let expandAt: CGFloat = -8
+
+        if !isTitleCollapsed, offset < collapseAt {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isTitleCollapsed = true
+            }
+        } else if isTitleCollapsed, offset > expandAt {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isTitleCollapsed = false
             }
         }
     }
