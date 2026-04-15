@@ -14,6 +14,7 @@ data class StarshipEntity(
     val length: String,
     val crew: String,
     val passengers: String,
+    val hyperdriveRating: String,
     val created: String,
     val edited: String,
     val url: String,

@@ -11,6 +11,7 @@ data class StarshipDto(
     val length: String,
     val crew: String,
     val passengers: String,
+    @Json(name = "hyperdrive_rating") val hyperdriveRating: String = "",
     val created: String,
     val edited: String,
     val url: String,

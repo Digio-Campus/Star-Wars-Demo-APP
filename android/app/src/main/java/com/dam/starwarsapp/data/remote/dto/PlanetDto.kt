@@ -12,6 +12,7 @@ data class PlanetDto(
     @Json(name = "rotation_period") val rotationPeriod: String,
     @Json(name = "orbital_period") val orbitalPeriod: String,
     @Json(name = "surface_water") val surfaceWater: String,
+    val residents: List<String> = emptyList(),
     val created: String,
     val edited: String,
     val url: String,
