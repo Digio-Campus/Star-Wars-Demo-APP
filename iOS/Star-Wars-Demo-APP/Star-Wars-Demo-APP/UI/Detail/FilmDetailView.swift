@@ -13,35 +13,36 @@ struct FilmDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
-                ScrollOffsetReader(coordinateSpaceName: Self.scrollSpaceName)
+            VStack(spacing: 16) {
+                scrollOffsetSentinel
 
                 switch viewModel.uiState {
                 case .loading:
                     LoadingView()
-                        .frame(maxWidth: .infinity, minHeight: 300)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 80)
 
                 case .error(let message):
                     ErrorView(message: message) {
                         viewModel.load()
                     }
-                    .frame(maxWidth: .infinity, minHeight: 300)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 60)
 
                 case .success(let film):
-                    VStack(spacing: 0) {
-                        VStack(spacing: 12) {
-                            headerSection(film)
-                        }
-                        .padding(.top, 16)
+                    VStack(spacing: 16) {
+                        headerSection(film)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 8)
 
-                        // Render the crawl as its own full-width section (Android pattern: separate card with fillMaxWidth).
                         openingCrawlSection(film)
 
-                        VStack(spacing: 12) {
-                            infoSection(film)
-                            statsSection(film)
-                        }
-                        .padding(.bottom, 16)
+                        infoSection(film)
+                            .padding(.horizontal, 16)
+
+                        statsSection(film)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 16)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -49,13 +50,9 @@ struct FilmDetailView: View {
             .frame(maxWidth: .infinity)
         }
         .coordinateSpace(.named(Self.scrollSpaceName))
-        .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
-            // Offset is ~0 at rest and becomes negative as the user scrolls down.
-            let effectiveOffset = min(offset, 0)
-            // Gate updates slightly so the nav title can animate smoothly without per-frame churn.
-            if abs(scrollOffset - effectiveOffset) > 1 {
-                scrollOffset = effectiveOffset
-            }
+        .onPreferenceChange(ScrollYPreferenceKey.self) { y in
+            // minY is ~0 at rest and becomes negative as the user scrolls down.
+            scrollOffset = min(y, 0)
         }
         .background {
             StarWarsColors.background
@@ -80,43 +77,58 @@ struct FilmDetailView: View {
         return "Film Detail"
     }
 
-    private var titleCollapseProgress: CGFloat {
-        // 0 = fully expanded, 1 = fully collapsed
-        let collapseDistance: CGFloat = 64
-        return min(max((-scrollOffset) / collapseDistance, 0), 1)
+    private var titleScale: CGFloat {
+        let expanded: CGFloat = 1.3
+        let collapsed: CGFloat = 0.9
+        let collapseDistance: CGFloat = 220
+
+        let progress = min(max((-scrollOffset) / collapseDistance, 0), 1)
+        return expanded + (collapsed - expanded) * progress
     }
 
     private var collapsibleNavigationTitle: some View {
-        let scaleExpanded: CGFloat = 1.35
-        let scaleCollapsed: CGFloat = 0.95
-        let scale = scaleExpanded + (scaleCollapsed - scaleExpanded) * titleCollapseProgress
-
-        return Text(navigationTitle)
-            .font(.headline.weight(.semibold))
+        Text(navigationTitle)
+            .font(.system(size: 18, weight: .semibold))
             .foregroundStyle(.primary)
             .lineLimit(1)
             .minimumScaleFactor(0.75)
-            .scaleEffect(scale)
-            .offset(y: (1 - titleCollapseProgress) * 4)
-            .animation(.easeInOut(duration: 0.18), value: scale)
+            .scaleEffect(titleScale)
+            .animation(.easeInOut(duration: 0.18), value: titleScale)
             .accessibilityAddTraits(.isHeader)
     }
 
-    private func headerSection(_ film: Film) -> some View {
-        FullWidthSection {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Episode \(film.episodeId.toRomanNumeral())")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(StarWarsColors.primary)
-
-                Text(film.title)
-                    .font(.title2.weight(.bold))
+    private var scrollOffsetSentinel: some View {
+        Color.clear
+            .frame(height: 1)
+            .background {
+                GeometryReader { proxy in
+                    Color.clear
+                        .preference(
+                            key: ScrollYPreferenceKey.self,
+                            value: proxy.frame(in: .named(Self.scrollSpaceName)).minY
+                        )
+                }
             }
+    }
+
+    private func headerSection(_ film: Film) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Episode \(film.episodeId.toRomanNumeral())")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(StarWarsColors.primary)
+
+            Text(film.title)
+                .font(.title2.weight(.bold))
+                .foregroundStyle(.primary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(StarWarsColors.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private func openingCrawlSection(_ film: Film) -> some View {
-        // Outer container has *no* horizontal padding so the background can go edge-to-edge.
+        // REQUIRED structure: frame(maxWidth) -> background(ignoresSafeArea horizontal) -> padding(.vertical)
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Opening Crawl")
@@ -129,50 +141,54 @@ struct FilmDetailView: View {
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity)
         .background {
             StarWarsColors.surface
                 .ignoresSafeArea(.container, edges: .horizontal)
         }
-        // Vertical spacing is outside the background (so the section reads as a separate full-width card).
         .padding(.vertical, 12)
     }
 
     private func infoSection(_ film: Film) -> some View {
-        FullWidthSection {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Info")
-                    .font(.headline)
-                    .foregroundStyle(StarWarsColors.primary)
+        card {
+            Text("Info")
+                .font(.headline)
+                .foregroundStyle(StarWarsColors.primary)
 
-                Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
-                    GridRow { label("Director"); value(film.director) }
-                    GridRow { label("Producer"); value(film.producer) }
-                    GridRow { label("Release"); value(film.releaseDate) }
-                }
+            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
+                GridRow { label("Director"); value(film.director) }
+                GridRow { label("Producer"); value(film.producer) }
+                GridRow { label("Release"); value(film.releaseDate) }
             }
         }
     }
 
     private func statsSection(_ film: Film) -> some View {
-        FullWidthSection {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Stats")
-                    .font(.headline)
-                    .foregroundStyle(StarWarsColors.primary)
+        card {
+            Text("Stats")
+                .font(.headline)
+                .foregroundStyle(StarWarsColors.primary)
 
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
-                    statCard("Characters", film.charactersCount)
-                    statCard("Planets", film.planetsCount)
-                    statCard("Starships", film.starshipsCount)
-                    statCard("Vehicles", film.vehiclesCount)
-                    statCard("Species", film.speciesCount)
-                }
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
+                statCard("Characters", film.charactersCount)
+                statCard("Planets", film.planetsCount)
+                statCard("Starships", film.starshipsCount)
+                statCard("Vehicles", film.vehiclesCount)
+                statCard("Species", film.speciesCount)
             }
         }
+    }
+
+    private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(StarWarsColors.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private func label(_ text: String) -> some View {
@@ -185,6 +201,7 @@ struct FilmDetailView: View {
     private func value(_ text: String) -> some View {
         Text(text)
             .font(.subheadline)
+            .foregroundStyle(.primary)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -200,11 +217,18 @@ struct FilmDetailView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(StarWarsColors.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(StarWarsColors.background.opacity(0.25), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(StarWarsColors.primary.opacity(0.12))
         }
     }
+}
 
+private struct ScrollYPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
 }
