@@ -5,7 +5,8 @@ struct FilmDetailView: View {
     @State private var isNavigationTitleCollapsed = false
 
     private static let scrollSpaceName = "film-detail-scroll"
-    private static let titleCollapseThreshold: CGFloat = -32
+    private static let titleCollapseAt: CGFloat = -32
+    private static let titleExpandAt: CGFloat = -8
 
     init(repository: FilmRepository, filmId: Int) {
         _viewModel = StateObject(wrappedValue: FilmDetailViewModel(filmId: filmId, repository: repository))
@@ -13,7 +14,7 @@ struct FilmDetailView: View {
 
     var body: some View {
         ScrollView {
-            scrollOffsetTracker
+            ScrollOffsetReader(coordinateSpaceName: Self.scrollSpaceName)
 
             switch viewModel.uiState {
             case .loading:
@@ -37,13 +38,9 @@ struct FilmDetailView: View {
                 .padding(.vertical, 16)
             }
         }
-        .coordinateSpace(name: Self.scrollSpaceName)
+        .coordinateSpace(.named(Self.scrollSpaceName))
         .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
-            let collapsed = offset < Self.titleCollapseThreshold
-            guard collapsed != isNavigationTitleCollapsed else { return }
-            withAnimation(.easeInOut(duration: 0.22)) {
-                isNavigationTitleCollapsed = collapsed
-            }
+            updateTitleCollapse(with: offset)
         }
         .background {
             StarWarsColors.background
@@ -75,18 +72,8 @@ struct FilmDetailView: View {
             .lineLimit(1)
             .minimumScaleFactor(0.75)
             .scaleEffect(isNavigationTitleCollapsed ? 1.0 : 1.25)
+            .animation(.easeInOut(duration: 0.22), value: isNavigationTitleCollapsed)
             .accessibilityAddTraits(.isHeader)
-    }
-
-    private var scrollOffsetTracker: some View {
-        GeometryReader { proxy in
-            Color.clear
-                .preference(
-                    key: ScrollOffsetPreferenceKey.self,
-                    value: proxy.frame(in: .named(Self.scrollSpaceName)).minY
-                )
-        }
-        .frame(height: 0)
     }
 
     private func headerSection(_ film: Film) -> some View {
@@ -103,7 +90,7 @@ struct FilmDetailView: View {
     }
 
     private func openingCrawlSection(_ film: Film) -> some View {
-        FullWidthSection {
+        FullWidthCrawlSection {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Opening Crawl")
                     .font(.headline)
@@ -187,11 +174,11 @@ struct FilmDetailView: View {
         }
     }
 
-    private struct ScrollOffsetPreferenceKey: PreferenceKey {
-        static var defaultValue: CGFloat = 0
-
-        static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-            value = nextValue()
+    private func updateTitleCollapse(with offset: CGFloat) {
+        if !isNavigationTitleCollapsed, offset < Self.titleCollapseAt {
+            isNavigationTitleCollapsed = true
+        } else if isNavigationTitleCollapsed, offset > Self.titleExpandAt {
+            isNavigationTitleCollapsed = false
         }
     }
 }
