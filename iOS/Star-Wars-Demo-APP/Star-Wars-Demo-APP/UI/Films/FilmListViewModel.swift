@@ -19,7 +19,7 @@ final class FilmListViewModel: ObservableObject {
     @Published private(set) var currentPage: Int = 1
     @Published private(set) var isLoadingMore: Bool = false
 
-    let itemsPerPage = 3
+    let itemsPerPage = 10
 
     private let repository: FilmRepository
     private var allFilms: [Film] = []
@@ -67,16 +67,17 @@ final class FilmListViewModel: ObservableObject {
     func loadNextPageIfNeeded() {
         let total = totalPages(for: filteredFilms)
         guard currentPage < total else { return }
-        guard !isLoadingMore else { return }
-        guard lastLoadMorePageRequested != currentPage else { return }
 
-        lastLoadMorePageRequested = currentPage
+        let nextPage = currentPage + 1
+        guard !isLoadingMore else { return }
+        guard lastLoadMorePageRequested != nextPage else { return }
+
+        lastLoadMorePageRequested = nextPage
         isLoadingMore = true
 
         loadMoreTask?.cancel()
         loadMoreTask = Task { @MainActor in
-            await Task.yield()
-            currentPage += 1
+            currentPage = nextPage
             publish()
             isLoadingMore = false
         }
@@ -106,15 +107,15 @@ final class FilmListViewModel: ObservableObject {
 
     private func pageSlice(for films: [Film]) -> [Film] {
         guard !films.isEmpty else { return [] }
+
         let total = totalPages(for: films)
         let clamped = min(max(currentPage, 1), total)
         if clamped != currentPage {
             currentPage = clamped
         }
-        let start = (clamped - 1) * itemsPerPage
-        let end = min(start + itemsPerPage, films.count)
-        guard start < end else { return [] }
-        return Array(films[start..<end])
+
+        let end = min(clamped * itemsPerPage, films.count)
+        return Array(films.prefix(end))
     }
 
     private func publish(showLoadingWhenEmpty: Bool = false) {

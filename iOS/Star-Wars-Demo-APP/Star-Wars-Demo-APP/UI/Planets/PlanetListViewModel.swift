@@ -67,16 +67,17 @@ final class PlanetListViewModel: ObservableObject {
     func loadNextPageIfNeeded() {
         let total = totalPages(for: filteredPlanets)
         guard currentPage < total else { return }
-        guard !isLoadingMore else { return }
-        guard lastLoadMorePageRequested != currentPage else { return }
 
-        lastLoadMorePageRequested = currentPage
+        let nextPage = currentPage + 1
+        guard !isLoadingMore else { return }
+        guard lastLoadMorePageRequested != nextPage else { return }
+
+        lastLoadMorePageRequested = nextPage
         isLoadingMore = true
 
         loadMoreTask?.cancel()
         loadMoreTask = Task { @MainActor in
-            await Task.yield()
-            currentPage += 1
+            currentPage = nextPage
             publish()
             isLoadingMore = false
         }
@@ -106,15 +107,15 @@ final class PlanetListViewModel: ObservableObject {
 
     private func pageSlice(for planets: [Planet]) -> [Planet] {
         guard !planets.isEmpty else { return [] }
+
         let total = totalPages(for: planets)
         let clamped = min(max(currentPage, 1), total)
         if clamped != currentPage {
             currentPage = clamped
         }
-        let start = (clamped - 1) * itemsPerPage
-        let end = min(start + itemsPerPage, planets.count)
-        guard start < end else { return [] }
-        return Array(planets[start..<end])
+
+        let end = min(clamped * itemsPerPage, planets.count)
+        return Array(planets.prefix(end))
     }
 
     private func publish(showLoadingWhenEmpty: Bool = false) {

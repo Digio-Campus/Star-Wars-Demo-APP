@@ -16,7 +16,10 @@ struct InfiniteScrollFooterView: View {
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
-            .onAppear(perform: onLoadMore)
+            .onAppear {
+                guard canLoadMore, !isLoading else { return }
+                onLoadMore()
+            }
             .animation(.easeInOut(duration: 0.2), value: isLoading)
             .accessibilityHidden(!isLoading)
         }
