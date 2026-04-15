@@ -2,29 +2,16 @@ package com.dam.starwarsapp.ui.screens.detail
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilmDetailScreen(
     viewModel: FilmDetailViewModel,
@@ -33,54 +20,86 @@ fun FilmDetailScreen(
     val state by viewModel.uiState.collectAsState()
     val film = state.film
 
-    Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = {
-            TopAppBar(
-                title = { Text(film?.title ?: "Película") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(vertical = 16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            if (film == null) {
-                Text(
-                    text = "No disponible en caché. Vuelve y actualiza.",
-                    color = MaterialTheme.colorScheme.error,
-                )
-                return@Column
-            }
+    ImmersiveDetailScaffold(
+        title = film?.title ?: "Película",
+        subtitle = film?.let { "Episodio ${it.episodeId} • ${it.releaseDate.asDisplayValue()}" },
+        gradient = DetailGradients.film(),
+        onBack = onBack,
+    ) { isWide ->
+        if (film == null) {
+            DetailErrorCard(message = "No disponible en caché. Vuelve y actualiza.")
+            return@ImmersiveDetailScaffold
+        }
 
-            Text(
-                text = "Episodio ${film.episodeId}",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Text(text = "Estreno: ${film.releaseDate}")
-            Text(text = "Director: ${film.director}")
-            Text(text = "Productor: ${film.producer}")
+        val stats = listOf(
+            StatItem("Personajes", film.characterCount.asDisplayValue()),
+            StatItem("Planetas", film.planetCount.asDisplayValue()),
+            StatItem("Naves", film.starshipCount.asDisplayValue()),
+            StatItem("Vehículos", film.vehicleCount.asDisplayValue()),
+            StatItem("Especies", film.speciesCount.asDisplayValue()),
+        )
 
-            Spacer(Modifier.padding(4.dp))
-            Text(
-                text = "Introducción",
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                text = film.openingCrawl,
+        val ficha = listOf(
+            DetailField("Episodio", film.episodeId.toString()),
+            DetailField("Estreno", film.releaseDate.asDisplayValue()),
+            DetailField("Director", film.director.asDisplayValue()),
+            DetailField("Productor", film.producer.asDisplayValue()),
+        )
+
+        val meta = listOf(
+            DetailField("Creado", film.created.asDisplayValue()),
+            DetailField("Editado", film.edited.asDisplayValue()),
+            DetailField("URL", film.url.asDisplayValue()),
+        )
+
+        if (isWide) {
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.bodyMedium,
-            )
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    DetailSectionCard(title = "Estadísticas") {
+                        DetailStatsGrid(stats = stats, columns = 3)
+                    }
+                    DetailSectionCard(title = "Ficha") {
+                        DetailFieldsList(fields = ficha)
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    DetailSectionCard(title = "Crawl") {
+                        Text(
+                            text = film.openingCrawl.asDisplayValue(),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                    DetailSectionCard(title = "Metadatos") {
+                        DetailFieldsList(fields = meta)
+                    }
+                }
+            }
+        } else {
+            DetailSectionCard(title = "Estadísticas") {
+                DetailStatsGrid(stats = stats, columns = 2)
+            }
+            DetailSectionCard(title = "Ficha") {
+                DetailFieldsList(fields = ficha)
+            }
+            DetailSectionCard(title = "Crawl") {
+                Text(
+                    text = film.openingCrawl.asDisplayValue(),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            DetailSectionCard(title = "Metadatos") {
+                DetailFieldsList(fields = meta)
+            }
         }
     }
 }
