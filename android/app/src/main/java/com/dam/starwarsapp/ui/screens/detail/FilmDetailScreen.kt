@@ -52,16 +52,29 @@ fun FilmDetailScreen(
             DetailField("URL", film.url.asDisplayValue()),
         )
 
+        val crawlText = film.openingCrawl
+            .asDisplayValue()
+            .replace("\r\n", "\n")
+            .trim()
+            .split(Regex("\n\\s*\n"))
+            .joinToString("\n\n") { paragraph ->
+                paragraph
+                    .replace("\n", " ")
+                    .replace(Regex("\\s+"), " ")
+                    .trim()
+            }
+
         if (isWide) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                DetailSectionCard(title = "Crawl") {
+                DetailSectionCard(
+                    title = "Crawl",
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
                     Text(
-                        text = film.openingCrawl
-                            .asDisplayValue()
-                            .replace("\r\n", "\n"),
+                        text = crawlText,
                         modifier = Modifier.fillMaxWidth(),
                         style = MaterialTheme.typography.bodyMedium,
                         softWrap = true,
@@ -101,11 +114,12 @@ fun FilmDetailScreen(
             DetailSectionCard(title = "Ficha") {
                 DetailFieldsList(fields = ficha)
             }
-            DetailSectionCard(title = "Crawl") {
+            DetailSectionCard(
+                title = "Crawl",
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 Text(
-                    text = film.openingCrawl
-                        .asDisplayValue()
-                        .replace("\r\n", "\n"),
+                    text = crawlText,
                     modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.bodyMedium,
                     softWrap = true,
