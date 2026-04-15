@@ -2,6 +2,10 @@ import SwiftUI
 
 struct FilmDetailView: View {
     @StateObject private var viewModel: FilmDetailViewModel
+    @State private var isNavigationTitleCollapsed = false
+
+    private static let scrollSpaceName = "film-detail-scroll"
+    private static let titleCollapseThreshold: CGFloat = -32
 
     init(repository: FilmRepository, filmId: Int) {
         _viewModel = StateObject(wrappedValue: FilmDetailViewModel(filmId: filmId, repository: repository))
@@ -9,6 +13,8 @@ struct FilmDetailView: View {
 
     var body: some View {
         ScrollView {
+            scrollOffsetTracker
+
             switch viewModel.uiState {
             case .loading:
                 LoadingView()
@@ -31,12 +37,25 @@ struct FilmDetailView: View {
                 .padding(.vertical, 16)
             }
         }
+        .coordinateSpace(name: Self.scrollSpaceName)
+        .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
+            let collapsed = offset < Self.titleCollapseThreshold
+            guard collapsed != isNavigationTitleCollapsed else { return }
+            withAnimation(.easeInOut(duration: 0.22)) {
+                isNavigationTitleCollapsed = collapsed
+            }
+        }
         .background {
             StarWarsColors.background
                 .ignoresSafeArea()
         }
         .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                collapsibleNavigationTitle
+            }
+        }
         .task {
             viewModel.load()
         }
@@ -47,6 +66,27 @@ struct FilmDetailView: View {
             return film.title
         }
         return "Film Detail"
+    }
+
+    private var collapsibleNavigationTitle: some View {
+        Text(navigationTitle)
+            .font(.headline.weight(.semibold))
+            .foregroundStyle(.primary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+            .scaleEffect(isNavigationTitleCollapsed ? 1.0 : 1.25)
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    private var scrollOffsetTracker: some View {
+        GeometryReader { proxy in
+            Color.clear
+                .preference(
+                    key: ScrollOffsetPreferenceKey.self,
+                    value: proxy.frame(in: .named(Self.scrollSpaceName)).minY
+                )
+        }
+        .frame(height: 0)
     }
 
     private func headerSection(_ film: Film) -> some View {
@@ -73,6 +113,8 @@ struct FilmDetailView: View {
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .layoutPriority(1)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -142,6 +184,14 @@ struct FilmDetailView: View {
         .overlay {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .strokeBorder(StarWarsColors.primary.opacity(0.12))
+        }
+    }
+
+    private struct ScrollOffsetPreferenceKey: PreferenceKey {
+        static var defaultValue: CGFloat = 0
+
+        static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+            value = nextValue()
         }
     }
 }
