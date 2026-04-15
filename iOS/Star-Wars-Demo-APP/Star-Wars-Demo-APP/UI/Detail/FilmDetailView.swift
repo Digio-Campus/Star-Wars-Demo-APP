@@ -27,6 +27,7 @@ struct FilmDetailView: View {
                     infoSection(film)
                     statsSection(film)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, 16)
             }
         }
@@ -71,9 +72,10 @@ struct FilmDetailView: View {
                 Text(film.openingCrawl)
                     .font(.body)
                     .foregroundStyle(.secondary)
-                    .lineLimit(nil)
+                    .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
