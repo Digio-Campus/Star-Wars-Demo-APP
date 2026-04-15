@@ -28,14 +28,22 @@ struct FilmDetailView: View {
                     .frame(maxWidth: .infinity, minHeight: 300)
 
                 case .success(let film):
-                    VStack(spacing: 12) {
-                        headerSection(film)
+                    VStack(spacing: 0) {
+                        VStack(spacing: 12) {
+                            headerSection(film)
+                        }
+                        .padding(.top, 16)
+
+                        // Render the crawl as its own full-width section (Android pattern: separate card with fillMaxWidth).
                         openingCrawlSection(film)
-                        infoSection(film)
-                        statsSection(film)
+
+                        VStack(spacing: 12) {
+                            infoSection(film)
+                            statsSection(film)
+                        }
+                        .padding(.bottom, 16)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, 16)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -108,24 +116,29 @@ struct FilmDetailView: View {
     }
 
     private func openingCrawlSection(_ film: Film) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Opening Crawl")
-                .font(.headline)
-                .foregroundStyle(StarWarsColors.primary)
+        // Outer container has *no* horizontal padding so the background can go edge-to-edge.
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Opening Crawl")
+                    .font(.headline)
+                    .foregroundStyle(StarWarsColors.primary)
 
-            Text(film.openingCrawl)
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                Text(film.openingCrawl)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 12)
         .background {
             StarWarsColors.surface
-                .ignoresSafeArea(.container, edges: [.horizontal])
+                .ignoresSafeArea(.container, edges: .horizontal)
         }
-        .ignoresSafeArea(.container, edges: [.horizontal])
+        // Vertical spacing is outside the background (so the section reads as a separate full-width card).
+        .padding(.vertical, 12)
     }
 
     private func infoSection(_ film: Film) -> some View {
