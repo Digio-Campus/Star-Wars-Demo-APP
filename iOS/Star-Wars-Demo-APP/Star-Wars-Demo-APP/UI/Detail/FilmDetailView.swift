@@ -75,9 +75,9 @@ struct FilmDetailView: View {
     }
 
     private var titleScale: CGFloat {
-        let expanded: CGFloat = 1.3
-        let collapsed: CGFloat = 0.9
-        let collapseDistance: CGFloat = 220
+        let expanded: CGFloat = 1.4
+        let collapsed: CGFloat = 0.85
+        let collapseDistance: CGFloat = 100  // More aggressive: scale faster
 
         let progress = min(max((-scrollOffset) / collapseDistance, 0), 1)
         return expanded + (collapsed - expanded) * progress
@@ -88,9 +88,9 @@ struct FilmDetailView: View {
             .font(.system(size: 18, weight: .semibold))
             .foregroundStyle(.primary)
             .lineLimit(1)
-            .minimumScaleFactor(0.75)
+            .minimumScaleFactor(0.6)
             .scaleEffect(titleScale)
-            .animation(.easeInOut(duration: 0.18), value: titleScale)
+            .animation(.easeInOut(duration: 0.22), value: titleScale)
             .accessibilityAddTraits(.isHeader)
     }
 
@@ -125,27 +125,27 @@ struct FilmDetailView: View {
     }
 
     private func openingCrawlSection(_ film: Film) -> some View {
-        // REQUIRED structure: frame(maxWidth) -> background(ignoresSafeArea horizontal) -> padding(.vertical)
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Opening Crawl")
-                    .font(.headline)
-                    .foregroundStyle(StarWarsColors.primary)
+        // FULL-WIDTH crawl: NO horizontal padding on the outer container, background extends to edges
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Opening Crawl")
+                .font(.headline)
+                .foregroundStyle(StarWarsColors.primary)
+                .padding(.horizontal, 16)
 
-                Text(film.openingCrawl)
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(.vertical, 12)
+            Text(film.openingCrawl)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.leading)
+                .lineLimit(nil)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
         }
+        .padding(.vertical, 12)
         .frame(maxWidth: .infinity)
         .background {
             StarWarsColors.surface
                 .ignoresSafeArea(.container, edges: .horizontal)
         }
-        .padding(.vertical, 12)
     }
 
     private func infoSection(_ film: Film) -> some View {
