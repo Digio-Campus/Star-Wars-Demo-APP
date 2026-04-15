@@ -53,35 +53,44 @@ fun FilmDetailScreen(
         )
 
         if (isWide) {
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    DetailSectionCard(title = "Estadísticas") {
-                        DetailStatsGrid(stats = stats, columns = 3)
-                    }
-                    DetailSectionCard(title = "Ficha") {
-                        DetailFieldsList(fields = ficha)
-                    }
+                DetailSectionCard(title = "Crawl") {
+                    Text(
+                        text = film.openingCrawl
+                            .asDisplayValue()
+                            .replace("\r\n", "\n"),
+                        modifier = Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        softWrap = true,
+                    )
                 }
 
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    DetailSectionCard(title = "Crawl") {
-                        Text(
-                            text = film.openingCrawl.asDisplayValue(),
-                            modifier = Modifier.fillMaxWidth(),
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        DetailSectionCard(title = "Estadísticas") {
+                            DetailStatsGrid(stats = stats, columns = 3)
+                        }
+                        DetailSectionCard(title = "Ficha") {
+                            DetailFieldsList(fields = ficha)
+                        }
                     }
-                    DetailSectionCard(title = "Metadatos") {
-                        DetailFieldsList(fields = meta)
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        DetailSectionCard(title = "Metadatos") {
+                            DetailFieldsList(fields = meta)
+                        }
                     }
                 }
             }
@@ -94,9 +103,12 @@ fun FilmDetailScreen(
             }
             DetailSectionCard(title = "Crawl") {
                 Text(
-                    text = film.openingCrawl.asDisplayValue(),
+                    text = film.openingCrawl
+                        .asDisplayValue()
+                        .replace("\r\n", "\n"),
                     modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.bodyMedium,
+                    softWrap = true,
                 )
             }
             DetailSectionCard(title = "Metadatos") {
