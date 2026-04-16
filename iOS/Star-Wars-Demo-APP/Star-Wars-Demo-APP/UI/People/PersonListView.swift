@@ -12,10 +12,7 @@ struct PersonListView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 12) {
-                SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by name")
-                content
-            }
+            content
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.large)
             .background(StarWarsColors.background)
@@ -32,39 +29,55 @@ struct PersonListView: View {
     private var content: some View {
         switch viewModel.uiState {
         case .loading:
-            LoadingView()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            VStack(spacing: 12) {
+                SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by name")
+
+                LoadingView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
 
         case .empty:
-            ContentUnavailableView(
-                "No people",
-                systemImage: "person.2",
-                description: Text("Try a different search.")
-            )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            VStack(spacing: 12) {
+                SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by name")
+
+                ContentUnavailableView(
+                    "No people",
+                    systemImage: "person.2",
+                    description: Text("Try a different search.")
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
 
         case .error(let message):
-            ErrorView(message: message) {
-                viewModel.loadPeople()
+            VStack(spacing: 12) {
+                SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by name")
+
+                ErrorView(message: message) {
+                    viewModel.loadPeople()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
         case .success(let people):
             ScrollView {
-                LazyVStack(spacing: 12) {
-                    ForEach(people) { person in
-                        NavigationLink(value: person.id) {
-                            PersonCardView(person: person)
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal)
-                    }
+                VStack(spacing: 12) {
+                    SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by name")
 
-                    InfiniteScrollFooterView(
-                        isLoading: viewModel.isLoadingMore,
-                        canLoadMore: viewModel.canLoadMore,
-                        onLoadMore: viewModel.loadNextPageIfNeeded
-                    )
+                    LazyVStack(spacing: 12) {
+                        ForEach(people) { person in
+                            NavigationLink(value: person.id) {
+                                PersonCardView(person: person)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal)
+                        }
+
+                        InfiniteScrollFooterView(
+                            isLoading: viewModel.isLoadingMore,
+                            canLoadMore: viewModel.canLoadMore,
+                            onLoadMore: viewModel.loadNextPageIfNeeded
+                        )
+                    }
                 }
                 .padding(.top, 4)
             }
