@@ -128,19 +128,24 @@ struct FilmDetailView: View {
     }
 
     private func openingCrawlSection(_ film: Film) -> some View {
-        FullWidthCrawlSection {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Opening Crawl")
-                    .font(.headline)
-                    .foregroundStyle(StarWarsColors.primary)
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Opening Crawl")
+                .font(.headline)
+                .foregroundStyle(StarWarsColors.primary)
 
-                Text(film.openingCrawl)
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(nil)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
+            Text(film.openingCrawl)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.leading)
+                .lineLimit(nil)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            StarWarsColors.surface
+                .ignoresSafeArea(.container, edges: .horizontal)
         }
     }
 
