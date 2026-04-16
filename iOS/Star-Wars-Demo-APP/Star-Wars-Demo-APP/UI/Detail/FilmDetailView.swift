@@ -13,7 +13,7 @@ struct FilmDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
+            VStack(spacing: 0) {
                 scrollOffsetSentinel
 
                 switch viewModel.uiState {
@@ -30,18 +30,21 @@ struct FilmDetailView: View {
                     .padding(.vertical, 60)
 
                 case .success(let film):
-                    headerSection(film)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
+                    VStack(spacing: 16) {
+                        headerSection(film)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 8)
 
+                        infoSection(film)
+                            .padding(.horizontal, 16)
+
+                        statsSection(film)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 16)
+                    }
+
+                    // CRAWL SEPARADO - FULL-WIDTH FORCED
                     openingCrawlSection(film)
-
-                    infoSection(film)
-                        .padding(.horizontal, 16)
-
-                    statsSection(film)
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -130,7 +133,6 @@ struct FilmDetailView: View {
                 Text("Opening Crawl")
                     .font(.headline)
                     .foregroundStyle(StarWarsColors.primary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
 
                 Text(film.openingCrawl)
                     .font(.body)
