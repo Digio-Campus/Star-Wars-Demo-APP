@@ -16,6 +16,9 @@ models:
   - id: "claude-haiku-4.5"
     description: "Fast responses for simple tasks and quick iterations"
 
+  - id: "gpt-5.3-codex"
+    description: "Latest GPT-5.3 coding model with enhanced capabilities"
+
   - id: "gpt-5.1-codex-max"
     description: "Advanced coding capabilities with extended context"
 
@@ -38,8 +41,10 @@ models:
 # If defined, these override the global models list for each engine
 engines:
   copilot:
-    default_model: "gpt-5.1-codex"
+    default_model: "gpt-5.3-codex"
     models:
+      - id: "gpt-5.3-codex"
+        description: "Latest GPT-5.3 coding model with enhanced capabilities"
       - id: "gpt-5.1-codex-max"
         description: "Advanced coding capabilities with extended context"
       - id: "gpt-5.1-codex"
