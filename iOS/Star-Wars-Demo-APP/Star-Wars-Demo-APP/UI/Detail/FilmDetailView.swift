@@ -13,23 +13,31 @@ struct FilmDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
-                scrollOffsetSentinel
-
-                switch viewModel.uiState {
-                case .loading:
+            switch viewModel.uiState {
+            case .loading:
+                VStack {
+                    scrollOffsetSentinel
                     LoadingView()
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 80)
+                }
+                .frame(maxWidth: .infinity)
 
-                case .error(let message):
+            case .error(let message):
+                VStack {
+                    scrollOffsetSentinel
                     ErrorView(message: message) {
                         viewModel.load()
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 60)
+                }
+                .frame(maxWidth: .infinity)
 
-                case .success(let film):
+            case .success(let film):
+                VStack(spacing: 0) {
+                    scrollOffsetSentinel
+
                     VStack(spacing: 16) {
                         headerSection(film)
                             .padding(.horizontal, 16)
@@ -40,14 +48,36 @@ struct FilmDetailView: View {
 
                         statsSection(film)
                             .padding(.horizontal, 16)
-                            .padding(.bottom, 16)
                     }
 
-                    // CRAWL SEPARADO - FULL-WIDTH FORCED
-                    openingCrawlSection(film)
+                    // CRAWL EDGE-TO-EDGE - OUTSIDE VSTACK PARENT
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Opening Crawl")
+                            .font(.headline)
+                            .foregroundStyle(StarWarsColors.primary)
+
+                        Text(film.openingCrawl)
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(nil)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(StarWarsColors.surface)
+                    .ignoresSafeArea(.container, edges: .horizontal)
+                    .padding(.top, 16)
+
+                    VStack(spacing: 16) {
+                        Spacer().frame(height: 0)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
                 }
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
         }
         .coordinateSpace(.named(Self.scrollSpaceName))
         .onPreferenceChange(ScrollYPreferenceKey.self) { y in
@@ -125,28 +155,6 @@ struct FilmDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(StarWarsColors.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
-
-    private func openingCrawlSection(_ film: Film) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Opening Crawl")
-                .font(.headline)
-                .foregroundStyle(StarWarsColors.primary)
-
-            Text(film.openingCrawl)
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.leading)
-                .lineLimit(nil)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            StarWarsColors.surface
-                .ignoresSafeArea(.container, edges: .horizontal)
-        }
     }
 
     private func infoSection(_ film: Film) -> some View {
