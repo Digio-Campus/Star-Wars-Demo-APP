@@ -4,9 +4,10 @@ struct FilmListView: View {
     private let repository: FilmRepository
 
     @StateObject private var viewModel: FilmListViewModel
-    @State private var isTitleCollapsed = false
+    @State private var scrollOffset: CGFloat = 0
 
     private let scrollSpaceName = "film-list-scroll"
+    private let title = "Star Wars Films"
 
     init(repository: FilmRepository) {
         self.repository = repository
@@ -16,11 +17,15 @@ struct FilmListView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 12) {
+                CollapsibleLargeTitleHeader(title: title, scrollOffset: scrollOffset)
+                    .padding(.horizontal)
+                    .padding(.top, 4)
+
                 SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by title")
                 content
             }
-            .navigationTitle("Star Wars Films")
-            .navigationBarTitleDisplayMode(isTitleCollapsed ? .inline : .large)
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
             .background(StarWarsColors.background)
             .task {
                 viewModel.loadFilms()
@@ -75,24 +80,14 @@ struct FilmListView: View {
             }
             .coordinateSpace(.named(scrollSpaceName))
             .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
-                updateTitleCollapse(with: offset)
+                updateScrollOffset(with: offset)
             }
         }
     }
 
-    private func updateTitleCollapse(with offset: CGFloat) {
-        // Hysteresis avoids flip-flopping if the user hovers near the threshold.
-        let collapseAt: CGFloat = -32
-        let expandAt: CGFloat = -8
-
-        if !isTitleCollapsed, offset < collapseAt {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                isTitleCollapsed = true
-            }
-        } else if isTitleCollapsed, offset > expandAt {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                isTitleCollapsed = false
-            }
-        }
+    private func updateScrollOffset(with offset: CGFloat) {
+        let clamped = min(offset, 0)
+        guard abs(clamped - scrollOffset) > 0.25 else { return }
+        scrollOffset = clamped
     }
 }

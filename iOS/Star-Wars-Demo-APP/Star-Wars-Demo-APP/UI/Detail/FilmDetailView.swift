@@ -125,26 +125,20 @@ struct FilmDetailView: View {
     }
 
     private func openingCrawlSection(_ film: Film) -> some View {
-        // FULL-WIDTH crawl: NO horizontal padding on the outer container, background extends to edges
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Opening Crawl")
-                .font(.headline)
-                .foregroundStyle(StarWarsColors.primary)
-                .padding(.horizontal, 16)
+        FullWidthCrawlSection {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Opening Crawl")
+                    .font(.headline)
+                    .foregroundStyle(StarWarsColors.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text(film.openingCrawl)
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.leading)
-                .lineLimit(nil)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-        }
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity)
-        .background {
-            StarWarsColors.surface
-                .ignoresSafeArea(.container, edges: .horizontal)
+                Text(film.openingCrawl)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(nil)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
     }
 

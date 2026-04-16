@@ -3,9 +3,10 @@ import SwiftUI
 struct PersonListView: View {
     private let repository: PersonRepository
     @StateObject private var viewModel: PersonListViewModel
-    @State private var isTitleCollapsed = false
+    @State private var scrollOffset: CGFloat = 0
 
     private let scrollSpaceName = "person-list-scroll"
+    private let title = "Star Wars People"
 
     init(repository: PersonRepository) {
         self.repository = repository
@@ -15,11 +16,15 @@ struct PersonListView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 12) {
+                CollapsibleLargeTitleHeader(title: title, scrollOffset: scrollOffset)
+                    .padding(.horizontal)
+                    .padding(.top, 4)
+
                 SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by name")
                 content
             }
-            .navigationTitle("Star Wars People")
-            .navigationBarTitleDisplayMode(isTitleCollapsed ? .inline : .large)
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
             .background(StarWarsColors.background)
             .task {
                 viewModel.loadPeople()
@@ -74,23 +79,14 @@ struct PersonListView: View {
             }
             .coordinateSpace(.named(scrollSpaceName))
             .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
-                updateTitleCollapse(with: offset)
+                updateScrollOffset(with: offset)
             }
         }
     }
 
-    private func updateTitleCollapse(with offset: CGFloat) {
-        let collapseAt: CGFloat = -32
-        let expandAt: CGFloat = -8
-
-        if !isTitleCollapsed, offset < collapseAt {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                isTitleCollapsed = true
-            }
-        } else if isTitleCollapsed, offset > expandAt {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                isTitleCollapsed = false
-            }
-        }
+    private func updateScrollOffset(with offset: CGFloat) {
+        let clamped = min(offset, 0)
+        guard abs(clamped - scrollOffset) > 0.25 else { return }
+        scrollOffset = clamped
     }
 }
