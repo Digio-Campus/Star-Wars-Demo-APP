@@ -49,7 +49,7 @@ struct FilmDetailView: View {
                                     .font(.headline)
                                     .foregroundStyle(StarWarsColors.primary)
 
-                                Text(film.openingCrawl)
+                                Text(normalizedOpeningCrawl(film.openingCrawl))
                                     .font(.body)
                                     .foregroundStyle(.secondary)
                                     .multilineTextAlignment(.leading)
@@ -216,6 +216,12 @@ struct FilmDetailView: View {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(StarWarsColors.primary.opacity(0.12))
         }
+    }
+
+    private func normalizedOpeningCrawl(_ text: String) -> String {
+        text
+            .components(separatedBy: .newlines)
+            .joined(separator: " ")
     }
 }
 
