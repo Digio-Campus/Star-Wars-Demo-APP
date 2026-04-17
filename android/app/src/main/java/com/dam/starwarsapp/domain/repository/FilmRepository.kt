@@ -9,4 +9,7 @@ interface FilmRepository {
 
     /** Offline-first: actualiza Room desde red; UI observa la caché. */
     suspend fun refreshFilms(): Result<Unit>
+
+    suspend fun deleteFilm(id: Int)
+
 }

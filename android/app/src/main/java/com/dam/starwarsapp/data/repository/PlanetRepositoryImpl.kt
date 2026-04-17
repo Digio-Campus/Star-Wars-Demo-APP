@@ -29,4 +29,11 @@ class PlanetRepositoryImpl @Inject constructor(
             dao.upsertAll(entities)
         }
     }
+
+    override suspend fun deletePlanet(id: Int) {
+        withContext(Dispatchers.IO) {
+            dao.deleteById(id)
+        }
+    }
+
 }

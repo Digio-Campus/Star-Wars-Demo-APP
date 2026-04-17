@@ -67,7 +67,7 @@ class PlanetsViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PlanetsUiState())
 
     init {
-        refresh()
+        loadPlanets()
     }
 
     fun onQueryChange(newQuery: String) {
@@ -87,6 +87,10 @@ class PlanetsViewModel @Inject constructor(
         }
     }
 
+    fun loadPlanets() {
+        refresh()
+    }
+
     fun refresh() {
         viewModelScope.launch {
             isRefreshing.value = true
@@ -96,6 +100,13 @@ class PlanetsViewModel @Inject constructor(
             isRefreshing.value = false
         }
     }
+
+    fun deleteItem(id: Int) {
+        viewModelScope.launch {
+            repository.deletePlanet(id)
+        }
+    }
+
 }
 
 data class PlanetsUiState(

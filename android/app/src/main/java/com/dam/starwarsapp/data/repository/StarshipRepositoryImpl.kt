@@ -29,4 +29,11 @@ class StarshipRepositoryImpl @Inject constructor(
             dao.upsertAll(entities)
         }
     }
+
+    override suspend fun deleteStarship(id: Int) {
+        withContext(Dispatchers.IO) {
+            dao.deleteById(id)
+        }
+    }
+
 }

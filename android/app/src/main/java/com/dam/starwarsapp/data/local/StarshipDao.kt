@@ -18,4 +18,8 @@ interface StarshipDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(entities: List<StarshipEntity>)
+
+    @Query("DELETE FROM starships WHERE id = :id")
+    suspend fun deleteById(id: Int): Int
+
 }

@@ -18,4 +18,8 @@ interface PlanetDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(entities: List<PlanetEntity>)
+
+    @Query("DELETE FROM planets WHERE id = :id")
+    suspend fun deleteById(id: Int): Int
+
 }

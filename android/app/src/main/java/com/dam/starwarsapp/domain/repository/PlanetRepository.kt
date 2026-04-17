@@ -7,4 +7,7 @@ interface PlanetRepository {
     fun observePlanets(): Flow<List<Planet>>
     fun observePlanet(id: Int): Flow<Planet?>
     suspend fun refreshPlanets(): Result<Unit>
+
+    suspend fun deletePlanet(id: Int)
+
 }

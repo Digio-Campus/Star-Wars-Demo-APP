@@ -18,4 +18,8 @@ interface FilmDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(entities: List<FilmEntity>)
+
+    @Query("DELETE FROM films WHERE id = :id")
+    suspend fun deleteById(id: Int): Int
+
 }

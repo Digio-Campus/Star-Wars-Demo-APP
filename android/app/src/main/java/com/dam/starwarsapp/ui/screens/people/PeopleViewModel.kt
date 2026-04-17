@@ -67,7 +67,7 @@ class PeopleViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PeopleUiState())
 
     init {
-        refresh()
+        loadPeople()
     }
 
     fun onQueryChange(newQuery: String) {
@@ -87,6 +87,10 @@ class PeopleViewModel @Inject constructor(
         }
     }
 
+    fun loadPeople() {
+        refresh()
+    }
+
     fun refresh() {
         viewModelScope.launch {
             isRefreshing.value = true
@@ -96,6 +100,13 @@ class PeopleViewModel @Inject constructor(
             isRefreshing.value = false
         }
     }
+
+    fun deleteItem(id: Int) {
+        viewModelScope.launch {
+            repository.deletePerson(id)
+        }
+    }
+
 }
 
 data class PeopleUiState(

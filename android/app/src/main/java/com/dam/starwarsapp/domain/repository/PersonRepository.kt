@@ -7,4 +7,7 @@ interface PersonRepository {
     fun observePeople(): Flow<List<Person>>
     fun observePerson(id: Int): Flow<Person?>
     suspend fun refreshPeople(): Result<Unit>
+
+    suspend fun deletePerson(id: Int)
+
 }

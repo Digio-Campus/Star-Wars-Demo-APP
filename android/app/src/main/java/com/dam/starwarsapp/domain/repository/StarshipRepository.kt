@@ -7,4 +7,7 @@ interface StarshipRepository {
     fun observeStarships(): Flow<List<Starship>>
     fun observeStarship(id: Int): Flow<Starship?>
     suspend fun refreshStarships(): Result<Unit>
+
+    suspend fun deleteStarship(id: Int)
+
 }

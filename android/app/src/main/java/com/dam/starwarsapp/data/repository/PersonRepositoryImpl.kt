@@ -29,4 +29,11 @@ class PersonRepositoryImpl @Inject constructor(
             dao.upsertAll(entities)
         }
     }
+
+    override suspend fun deletePerson(id: Int) {
+        withContext(Dispatchers.IO) {
+            dao.deleteById(id)
+        }
+    }
+
 }

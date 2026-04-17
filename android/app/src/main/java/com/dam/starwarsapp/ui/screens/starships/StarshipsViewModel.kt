@@ -67,7 +67,7 @@ class StarshipsViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StarshipsUiState())
 
     init {
-        refresh()
+        loadStarships()
     }
 
     fun onQueryChange(newQuery: String) {
@@ -87,6 +87,10 @@ class StarshipsViewModel @Inject constructor(
         }
     }
 
+    fun loadStarships() {
+        refresh()
+    }
+
     fun refresh() {
         viewModelScope.launch {
             isRefreshing.value = true
@@ -96,6 +100,13 @@ class StarshipsViewModel @Inject constructor(
             isRefreshing.value = false
         }
     }
+
+    fun deleteItem(id: Int) {
+        viewModelScope.launch {
+            repository.deleteStarship(id)
+        }
+    }
+
 }
 
 data class StarshipsUiState(

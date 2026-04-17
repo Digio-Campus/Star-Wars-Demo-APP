@@ -67,7 +67,7 @@ class FilmsViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FilmsUiState())
 
     init {
-        refresh()
+        loadFilms()
     }
 
     fun onQueryChange(newQuery: String) {
@@ -87,6 +87,10 @@ class FilmsViewModel @Inject constructor(
         }
     }
 
+    fun loadFilms() {
+        refresh()
+    }
+
     fun refresh() {
         viewModelScope.launch {
             isRefreshing.value = true
@@ -96,6 +100,13 @@ class FilmsViewModel @Inject constructor(
             isRefreshing.value = false
         }
     }
+
+    fun deleteItem(id: Int) {
+        viewModelScope.launch {
+            repository.deleteFilm(id)
+        }
+    }
+
 }
 
 data class FilmsUiState(

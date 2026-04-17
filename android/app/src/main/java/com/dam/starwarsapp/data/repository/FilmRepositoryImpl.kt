@@ -29,4 +29,11 @@ class FilmRepositoryImpl @Inject constructor(
             filmDao.upsertAll(entities)
         }
     }
+
+    override suspend fun deleteFilm(id: Int) {
+        withContext(Dispatchers.IO) {
+            filmDao.deleteById(id)
+        }
+    }
+
 }

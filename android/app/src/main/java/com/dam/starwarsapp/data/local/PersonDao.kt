@@ -18,4 +18,8 @@ interface PersonDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(entities: List<PersonEntity>)
+
+    @Query("DELETE FROM people WHERE id = :id")
+    suspend fun deleteById(id: Int): Int
+
 }
