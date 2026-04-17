@@ -27,57 +27,74 @@ struct FilmListView: View {
     }
 
     private var content: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by title")
+        List {
+            SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by title")
+                .padding(.vertical, 4)
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
 
-                switch viewModel.uiState {
-                case .loading:
-                    LoadingView()
-                        .frame(maxWidth: .infinity, minHeight: 300)
-
-                case .empty:
-                    ContentUnavailableView(
-                        "No films",
-                        systemImage: "film",
-                        description: Text("Try a different search.")
-                    )
+            switch viewModel.uiState {
+            case .loading:
+                LoadingView()
                     .frame(maxWidth: .infinity, minHeight: 300)
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
 
-                case .error(let message):
-                    ErrorView(message: message) {
-                        Task { await viewModel.loadFilms() }
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 300)
+            case .empty:
+                ContentUnavailableView(
+                    "No films",
+                    systemImage: "film",
+                    description: Text("Try a different search.")
+                )
+                .frame(maxWidth: .infinity, minHeight: 300)
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
 
-                case .success(let films):
-                    LazyVStack(spacing: 12) {
-                        ForEach(films) { film in
-                            NavigationLink(value: film.id) {
-                                FilmCardView(film: film)
-                            }
-                            .buttonStyle(.plain)
+            case .error(let message):
+                ErrorView(message: message) {
+                    Task { await viewModel.loadFilms() }
+                }
+                .frame(maxWidth: .infinity, minHeight: 300)
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+
+            case .success(let films):
+                ForEach(films) { film in
+                    NavigationLink(value: film.id) {
+                        FilmCardView(film: film)
                             .padding(.horizontal)
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) {
-                                    deleteFilm(film)
-                                } label: {
-                                    Text("DELETE")
-                                }
-                                .tint(.red)
-                            }
+                            .padding(.vertical, 6)
+                    }
+                    .buttonStyle(.plain)
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
+                            deleteFilm(film)
+                        } label: {
+                            Text("DELETE")
                         }
-
-                        InfiniteScrollFooterView(
-                            isLoading: viewModel.isLoadingMore,
-                            canLoadMore: viewModel.canLoadMore,
-                            onLoadMore: viewModel.loadNextPageIfNeeded
-                        )
+                        .tint(.red)
                     }
                 }
+
+                InfiniteScrollFooterView(
+                    isLoading: viewModel.isLoadingMore,
+                    canLoadMore: viewModel.canLoadMore,
+                    onLoadMore: viewModel.loadNextPageIfNeeded
+                )
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
             }
-            .padding(.top, 4)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .refreshable {
             await viewModel.loadFilms()
         }

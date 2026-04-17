@@ -26,57 +26,74 @@ struct PersonListView: View {
     }
 
     private var content: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by name")
+        List {
+            SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by name")
+                .padding(.vertical, 4)
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
 
-                switch viewModel.uiState {
-                case .loading:
-                    LoadingView()
-                        .frame(maxWidth: .infinity, minHeight: 300)
-
-                case .empty:
-                    ContentUnavailableView(
-                        "No people",
-                        systemImage: "person.2",
-                        description: Text("Try a different search.")
-                    )
+            switch viewModel.uiState {
+            case .loading:
+                LoadingView()
                     .frame(maxWidth: .infinity, minHeight: 300)
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
 
-                case .error(let message):
-                    ErrorView(message: message) {
-                        Task { await viewModel.loadPeople() }
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 300)
+            case .empty:
+                ContentUnavailableView(
+                    "No people",
+                    systemImage: "person.2",
+                    description: Text("Try a different search.")
+                )
+                .frame(maxWidth: .infinity, minHeight: 300)
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
 
-                case .success(let people):
-                    LazyVStack(spacing: 12) {
-                        ForEach(people) { person in
-                            NavigationLink(value: person.id) {
-                                PersonCardView(person: person)
-                            }
-                            .buttonStyle(.plain)
+            case .error(let message):
+                ErrorView(message: message) {
+                    Task { await viewModel.loadPeople() }
+                }
+                .frame(maxWidth: .infinity, minHeight: 300)
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+
+            case .success(let people):
+                ForEach(people) { person in
+                    NavigationLink(value: person.id) {
+                        PersonCardView(person: person)
                             .padding(.horizontal)
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) {
-                                    deletePerson(person)
-                                } label: {
-                                    Text("DELETE")
-                                }
-                                .tint(.red)
-                            }
+                            .padding(.vertical, 6)
+                    }
+                    .buttonStyle(.plain)
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
+                            deletePerson(person)
+                        } label: {
+                            Text("DELETE")
                         }
-
-                        InfiniteScrollFooterView(
-                            isLoading: viewModel.isLoadingMore,
-                            canLoadMore: viewModel.canLoadMore,
-                            onLoadMore: viewModel.loadNextPageIfNeeded
-                        )
+                        .tint(.red)
                     }
                 }
+
+                InfiniteScrollFooterView(
+                    isLoading: viewModel.isLoadingMore,
+                    canLoadMore: viewModel.canLoadMore,
+                    onLoadMore: viewModel.loadNextPageIfNeeded
+                )
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
             }
-            .padding(.top, 4)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .refreshable {
             await viewModel.loadPeople()
         }

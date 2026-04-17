@@ -26,57 +26,74 @@ struct StarshipListView: View {
     }
 
     private var content: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by name")
+        List {
+            SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by name")
+                .padding(.vertical, 4)
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
 
-                switch viewModel.uiState {
-                case .loading:
-                    LoadingView()
-                        .frame(maxWidth: .infinity, minHeight: 300)
-
-                case .empty:
-                    ContentUnavailableView(
-                        "No starships",
-                        systemImage: "airplane",
-                        description: Text("Try a different search.")
-                    )
+            switch viewModel.uiState {
+            case .loading:
+                LoadingView()
                     .frame(maxWidth: .infinity, minHeight: 300)
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
 
-                case .error(let message):
-                    ErrorView(message: message) {
-                        Task { await viewModel.loadStarships() }
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 300)
+            case .empty:
+                ContentUnavailableView(
+                    "No starships",
+                    systemImage: "airplane",
+                    description: Text("Try a different search.")
+                )
+                .frame(maxWidth: .infinity, minHeight: 300)
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
 
-                case .success(let starships):
-                    LazyVStack(spacing: 12) {
-                        ForEach(starships) { starship in
-                            NavigationLink(value: starship.id) {
-                                StarshipCardView(starship: starship)
-                            }
-                            .buttonStyle(.plain)
+            case .error(let message):
+                ErrorView(message: message) {
+                    Task { await viewModel.loadStarships() }
+                }
+                .frame(maxWidth: .infinity, minHeight: 300)
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+
+            case .success(let starships):
+                ForEach(starships) { starship in
+                    NavigationLink(value: starship.id) {
+                        StarshipCardView(starship: starship)
                             .padding(.horizontal)
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) {
-                                    deleteStarship(starship)
-                                } label: {
-                                    Text("DELETE")
-                                }
-                                .tint(.red)
-                            }
+                            .padding(.vertical, 6)
+                    }
+                    .buttonStyle(.plain)
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
+                            deleteStarship(starship)
+                        } label: {
+                            Text("DELETE")
                         }
-
-                        InfiniteScrollFooterView(
-                            isLoading: viewModel.isLoadingMore,
-                            canLoadMore: viewModel.canLoadMore,
-                            onLoadMore: viewModel.loadNextPageIfNeeded
-                        )
+                        .tint(.red)
                     }
                 }
+
+                InfiniteScrollFooterView(
+                    isLoading: viewModel.isLoadingMore,
+                    canLoadMore: viewModel.canLoadMore,
+                    onLoadMore: viewModel.loadNextPageIfNeeded
+                )
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
             }
-            .padding(.top, 4)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .refreshable {
             await viewModel.loadStarships()
         }
