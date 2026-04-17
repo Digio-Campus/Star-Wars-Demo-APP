@@ -1,59 +1,59 @@
 package com.dam.starwarsapp.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.DismissDirection
+import androidx.compose.material.DismissState
 import androidx.compose.material.DismissValue
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.SwipeToDismiss
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.rememberDismissState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SwipeToDeleteItem(
+    itemKey: Any,
     modifier: Modifier = Modifier,
     onDelete: () -> Unit,
     content: @Composable () -> Unit,
 ) {
-    var isRemoved by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
+    var isRemoved by remember(itemKey) { mutableStateOf(false) }
+    val onDeleteState = rememberUpdatedState(onDelete)
 
-    val dismissState = rememberDismissState(
-        confirmStateChange = { value ->
-            if (value == DismissValue.DismissedToStart) {
-                isRemoved = true
-                scope.launch {
-                    delay(250)
-                    onDelete()
+    val dismissState = remember(itemKey) {
+        DismissState(
+            initialValue = DismissValue.Default,
+            confirmStateChange = { value ->
+                if (value == DismissValue.DismissedToStart && !isRemoved) {
+                    isRemoved = true
+                    // Important: call delete immediately. If we delay inside a composable scope,
+                    // the coroutine may be cancelled when the item leaves composition.
+                    onDeleteState.value.invoke()
                 }
+                // Permit resetting back to Default; otherwise items can get stuck "half swiped".
                 true
-            } else {
-                false
-            }
-        },
-    )
+            },
+        )
+    }
 
     AnimatedVisibility(
         visible = !isRemoved,

@@ -14,16 +14,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -68,17 +64,11 @@ fun StarshipsScreen(
     }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             LargeTopAppBar(
                 title = { Text("Naves") },
                 scrollBehavior = scrollBehavior,
-                actions = {
-                    IconButton(onClick = viewModel::loadStarships) {
-                        Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Actualizar")
-                    }
-                },
             )
         },
     ) { padding ->
@@ -122,6 +112,7 @@ fun StarshipsScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
+                    .nestedScroll(scrollBehavior.nestedScrollConnection)
                     .pullRefresh(pullRefreshState),
             ) {
                 LazyColumn(
@@ -134,6 +125,7 @@ fun StarshipsScreen(
                         key = { it.id },
                     ) { item ->
                         SwipeToDeleteItem(
+                            itemKey = item.id,
                             onDelete = { viewModel.deleteItem(item.id) },
                         ) {
                             Card(
