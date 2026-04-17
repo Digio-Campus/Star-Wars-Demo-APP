@@ -34,32 +34,53 @@ struct Star_Wars_Demo_APPTests {
     }
 
     @Test func listViewModel_searchResetsToPage1() async throws {
-        let films = [
-            Film(id: 1, title: "A New Hope", episodeId: 4, openingCrawl: "", director: "Lucas", producer: "", releaseDate: "", charactersCount: 0, planetsCount: 0, starshipsCount: 0, vehiclesCount: 0, speciesCount: 0),
-            Film(id: 2, title: "The Empire Strikes Back", episodeId: 5, openingCrawl: "", director: "Kershner", producer: "", releaseDate: "", charactersCount: 0, planetsCount: 0, starshipsCount: 0, vehiclesCount: 0, speciesCount: 0),
-            Film(id: 3, title: "Return of the Jedi", episodeId: 6, openingCrawl: "", director: "Marquand", producer: "", releaseDate: "", charactersCount: 0, planetsCount: 0, starshipsCount: 0, vehiclesCount: 0, speciesCount: 0),
-            Film(id: 4, title: "The Phantom Menace", episodeId: 1, openingCrawl: "", director: "Lucas", producer: "", releaseDate: "", charactersCount: 0, planetsCount: 0, starshipsCount: 0, vehiclesCount: 0, speciesCount: 0)
-        ]
+        let films: [Film] = (1...12).map { i in
+            Film(
+                id: i,
+                title: i == 1 ? "A New Hope" : "Film \(i)",
+                episodeId: i,
+                openingCrawl: "",
+                director: "",
+                producer: "",
+                releaseDate: "",
+                charactersCount: 0,
+                planetsCount: 0,
+                starshipsCount: 0,
+                vehiclesCount: 0,
+                speciesCount: 0
+            )
+        }
 
         let repo = StubFilmRepository(films: films)
         let vm = await MainActor.run { FilmListViewModel(repository: repo) }
 
+        await vm.loadFilms()
+
         await MainActor.run {
-            vm.loadFilms()
+            if case .success(let pageFilms) = vm.uiState {
+                #expect(pageFilms.count == 10)
+            } else {
+                #expect(Bool(false))
+            }
+
+            vm.loadNextPageIfNeeded()
         }
+
         try await Task.sleep(for: .milliseconds(50))
 
         await MainActor.run {
-            vm.nextPage()
             #expect(vm.currentPage == 2)
+            if case .success(let pageFilms) = vm.uiState {
+                #expect(pageFilms.count == 12)
+            } else {
+                #expect(Bool(false))
+            }
 
             vm.searchQuery = "hope"
             #expect(vm.currentPage == 1)
 
-            if case .success(let pageFilms, let current, let total) = vm.uiState {
-                #expect(pageFilms.count == 1)
-                #expect(current == 1)
-                #expect(total == 1)
+            if case .success(let filtered) = vm.uiState {
+                #expect(filtered.count == 1)
             } else {
                 #expect(Bool(false))
             }
@@ -151,6 +172,10 @@ private struct StubFilmRepository: FilmRepository {
     func refreshFilm(id: Int) async -> Result<Film, Error> {
         await getFilmById(id)
     }
+
+    func deleteItem(id: Int) async -> Result<Void, Error> {
+        .success(())
+    }
 }
 
 private final class StubAPIService: StarWarsAPIServiceProtocol {
@@ -165,4 +190,13 @@ private final class StubAPIService: StarWarsAPIServiceProtocol {
         }
         return dto
     }
+
+    func fetchPeople() async throws -> [PersonDTO] { [] }
+    func fetchPerson(id: Int) async throws -> PersonDTO { throw NSError(domain: "test", code: 501) }
+
+    func fetchPlanets() async throws -> [PlanetDTO] { [] }
+    func fetchPlanet(id: Int) async throws -> PlanetDTO { throw NSError(domain: "test", code: 501) }
+
+    func fetchStarships() async throws -> [StarshipDTO] { [] }
+    func fetchStarship(id: Int) async throws -> StarshipDTO { throw NSError(domain: "test", code: 501) }
 }

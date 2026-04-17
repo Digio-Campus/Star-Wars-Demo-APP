@@ -55,6 +55,15 @@ final class StarshipRepositoryImpl: StarshipRepository {
             return .failure(error)
         }
     }
+
+    func deleteItem(id: Int) async -> Result<Void, Error> {
+        do {
+            try await local.deleteStarship(id: id)
+            return .success(())
+        } catch {
+            return .failure(error)
+        }
+    }
 }
 
 private extension StarshipSwiftDataModel {

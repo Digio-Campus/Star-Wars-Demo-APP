@@ -1,4 +1,4 @@
-import Foundation
+import SwiftUI
 
 @MainActor
 final class FilmListViewModel: ObservableObject {
@@ -35,14 +35,15 @@ final class FilmListViewModel: ObservableObject {
         currentPage < totalPages(for: filteredFilms)
     }
 
-    func loadFilms() {
+    func loadFilms() async {
         refreshTask?.cancel()
         loadMoreTask?.cancel()
         resetPaging()
         uiState = .loading
 
-        refreshTask = Task { @MainActor in
+        let task = Task { @MainActor in
             let cached = await repository.getFilms()
+            guard !Task.isCancelled else { return }
             switch cached {
             case .success(let films):
                 self.allFilms = films
@@ -52,6 +53,7 @@ final class FilmListViewModel: ObservableObject {
             }
 
             let fresh = await repository.refreshFilms()
+            guard !Task.isCancelled else { return }
             switch fresh {
             case .success(let films):
                 self.allFilms = films
@@ -60,6 +62,28 @@ final class FilmListViewModel: ObservableObject {
                 if self.allFilms.isEmpty {
                     self.uiState = .error(message: error.localizedDescription)
                 }
+            }
+        }
+
+        refreshTask = task
+        await withTaskCancellationHandler {
+            await task.value
+        } onCancel: {
+            task.cancel()
+        }
+    }
+
+    func deleteItem(id: Int) async {
+        let result = await repository.deleteItem(id: id)
+        switch result {
+        case .success:
+            withAnimation(.easeInOut) {
+                allFilms.removeAll { $0.id == id }
+                publish()
+            }
+        case .failure(let error):
+            if allFilms.isEmpty {
+                uiState = .error(message: error.localizedDescription)
             }
         }
     }

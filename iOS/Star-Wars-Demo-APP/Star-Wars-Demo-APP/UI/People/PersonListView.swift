@@ -13,56 +13,43 @@ struct PersonListView: View {
     var body: some View {
         NavigationStack {
             content
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.large)
-            .background(StarWarsColors.background)
-            .task {
-                viewModel.loadPeople()
-            }
-            .navigationDestination(for: Int.self) { personId in
-                PersonDetailView(repository: repository, personId: personId)
-            }
+                .navigationTitle(title)
+                .navigationBarTitleDisplayMode(.large)
+                .background(StarWarsColors.background)
+                .task {
+                    await viewModel.loadPeople()
+                }
+                .navigationDestination(for: Int.self) { personId in
+                    PersonDetailView(repository: repository, personId: personId)
+                }
         }
     }
 
-    @ViewBuilder
     private var content: some View {
-        switch viewModel.uiState {
-        case .loading:
+        ScrollView {
             VStack(spacing: 12) {
                 SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by name")
 
-                LoadingView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
+                switch viewModel.uiState {
+                case .loading:
+                    LoadingView()
+                        .frame(maxWidth: .infinity, minHeight: 300)
 
-        case .empty:
-            VStack(spacing: 12) {
-                SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by name")
+                case .empty:
+                    ContentUnavailableView(
+                        "No people",
+                        systemImage: "person.2",
+                        description: Text("Try a different search.")
+                    )
+                    .frame(maxWidth: .infinity, minHeight: 300)
 
-                ContentUnavailableView(
-                    "No people",
-                    systemImage: "person.2",
-                    description: Text("Try a different search.")
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
+                case .error(let message):
+                    ErrorView(message: message) {
+                        Task { await viewModel.loadPeople() }
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 300)
 
-        case .error(let message):
-            VStack(spacing: 12) {
-                SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by name")
-
-                ErrorView(message: message) {
-                    viewModel.loadPeople()
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-
-        case .success(let people):
-            ScrollView {
-                VStack(spacing: 12) {
-                    SearchBarView(text: $viewModel.searchQuery, placeholder: "Search by name")
-
+                case .success(let people):
                     LazyVStack(spacing: 12) {
                         ForEach(people) { person in
                             NavigationLink(value: person.id) {
@@ -70,6 +57,14 @@ struct PersonListView: View {
                             }
                             .buttonStyle(.plain)
                             .padding(.horizontal)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    deletePerson(person)
+                                } label: {
+                                    Text("DELETE")
+                                }
+                                .tint(.red)
+                            }
                         }
 
                         InfiniteScrollFooterView(
@@ -79,8 +74,15 @@ struct PersonListView: View {
                         )
                     }
                 }
-                .padding(.top, 4)
             }
+            .padding(.top, 4)
         }
+        .refreshable {
+            await viewModel.loadPeople()
+        }
+    }
+
+    private func deletePerson(_ person: Person) {
+        Task { await viewModel.deleteItem(id: person.id) }
     }
 }

@@ -9,4 +9,6 @@ protocol PersonRepository {
 
     func getPersonById(_ id: Int) async -> Result<Person, Error>
     func refreshPerson(id: Int) async -> Result<Person, Error>
+
+    func deleteItem(id: Int) async -> Result<Void, Error>
 }

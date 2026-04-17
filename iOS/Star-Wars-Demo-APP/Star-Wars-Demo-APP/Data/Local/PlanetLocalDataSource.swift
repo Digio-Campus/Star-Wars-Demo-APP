@@ -60,6 +60,14 @@ actor PlanetLocalDataSource {
         try context.save()
     }
 
+    func deletePlanet(id: Int) throws {
+        let context = makeContext()
+        let descriptor = FetchDescriptor<PlanetSwiftDataModel>(predicate: #Predicate { $0.id == id })
+        guard let model = try context.fetch(descriptor).first else { return }
+        context.delete(model)
+        try context.save()
+    }
+
     func deleteAllPlanets() throws {
         let context = makeContext()
         try context.delete(model: PlanetSwiftDataModel.self)

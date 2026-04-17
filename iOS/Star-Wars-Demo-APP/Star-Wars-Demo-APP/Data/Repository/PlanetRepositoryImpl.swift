@@ -55,6 +55,15 @@ final class PlanetRepositoryImpl: PlanetRepository {
             return .failure(error)
         }
     }
+
+    func deleteItem(id: Int) async -> Result<Void, Error> {
+        do {
+            try await local.deletePlanet(id: id)
+            return .success(())
+        } catch {
+            return .failure(error)
+        }
+    }
 }
 
 private extension PlanetSwiftDataModel {

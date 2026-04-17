@@ -1,4 +1,4 @@
-import Foundation
+import SwiftUI
 
 @MainActor
 final class PersonListViewModel: ObservableObject {
@@ -35,14 +35,15 @@ final class PersonListViewModel: ObservableObject {
         currentPage < totalPages(for: filteredPeople)
     }
 
-    func loadPeople() {
+    func loadPeople() async {
         refreshTask?.cancel()
         loadMoreTask?.cancel()
         resetPaging()
         uiState = .loading
 
-        refreshTask = Task { @MainActor in
+        let task = Task { @MainActor in
             let cached = await repository.getPeople()
+            guard !Task.isCancelled else { return }
             switch cached {
             case .success(let people):
                 self.allPeople = people
@@ -52,6 +53,7 @@ final class PersonListViewModel: ObservableObject {
             }
 
             let fresh = await repository.refreshPeople()
+            guard !Task.isCancelled else { return }
             switch fresh {
             case .success(let people):
                 self.allPeople = people
@@ -60,6 +62,28 @@ final class PersonListViewModel: ObservableObject {
                 if self.allPeople.isEmpty {
                     self.uiState = .error(message: error.localizedDescription)
                 }
+            }
+        }
+
+        refreshTask = task
+        await withTaskCancellationHandler {
+            await task.value
+        } onCancel: {
+            task.cancel()
+        }
+    }
+
+    func deleteItem(id: Int) async {
+        let result = await repository.deleteItem(id: id)
+        switch result {
+        case .success:
+            withAnimation(.easeInOut) {
+                allPeople.removeAll { $0.id == id }
+                publish()
+            }
+        case .failure(let error):
+            if allPeople.isEmpty {
+                uiState = .error(message: error.localizedDescription)
             }
         }
     }

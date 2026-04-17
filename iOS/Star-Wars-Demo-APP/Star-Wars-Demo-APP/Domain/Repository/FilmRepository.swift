@@ -9,4 +9,6 @@ protocol FilmRepository {
 
     func getFilmById(_ id: Int) async -> Result<Film, Error>
     func refreshFilm(id: Int) async -> Result<Film, Error>
+
+    func deleteItem(id: Int) async -> Result<Void, Error>
 }

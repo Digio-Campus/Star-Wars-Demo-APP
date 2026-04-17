@@ -9,4 +9,6 @@ protocol PlanetRepository {
 
     func getPlanetById(_ id: Int) async -> Result<Planet, Error>
     func refreshPlanet(id: Int) async -> Result<Planet, Error>
+
+    func deleteItem(id: Int) async -> Result<Void, Error>
 }

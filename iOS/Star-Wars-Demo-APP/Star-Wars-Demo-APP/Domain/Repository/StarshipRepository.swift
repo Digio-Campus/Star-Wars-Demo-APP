@@ -9,4 +9,6 @@ protocol StarshipRepository {
 
     func getStarshipById(_ id: Int) async -> Result<Starship, Error>
     func refreshStarship(id: Int) async -> Result<Starship, Error>
+
+    func deleteItem(id: Int) async -> Result<Void, Error>
 }

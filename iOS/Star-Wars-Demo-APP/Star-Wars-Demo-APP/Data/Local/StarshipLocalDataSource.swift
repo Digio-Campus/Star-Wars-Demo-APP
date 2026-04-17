@@ -62,6 +62,14 @@ actor StarshipLocalDataSource {
         try context.save()
     }
 
+    func deleteStarship(id: Int) throws {
+        let context = makeContext()
+        let descriptor = FetchDescriptor<StarshipSwiftDataModel>(predicate: #Predicate { $0.id == id })
+        guard let model = try context.fetch(descriptor).first else { return }
+        context.delete(model)
+        try context.save()
+    }
+
     func deleteAllStarships() throws {
         let context = makeContext()
         try context.delete(model: StarshipSwiftDataModel.self)

@@ -1,4 +1,4 @@
-import Foundation
+import SwiftUI
 
 @MainActor
 final class PlanetListViewModel: ObservableObject {
@@ -35,14 +35,15 @@ final class PlanetListViewModel: ObservableObject {
         currentPage < totalPages(for: filteredPlanets)
     }
 
-    func loadPlanets() {
+    func loadPlanets() async {
         refreshTask?.cancel()
         loadMoreTask?.cancel()
         resetPaging()
         uiState = .loading
 
-        refreshTask = Task { @MainActor in
+        let task = Task { @MainActor in
             let cached = await repository.getPlanets()
+            guard !Task.isCancelled else { return }
             switch cached {
             case .success(let planets):
                 self.allPlanets = planets
@@ -52,6 +53,7 @@ final class PlanetListViewModel: ObservableObject {
             }
 
             let fresh = await repository.refreshPlanets()
+            guard !Task.isCancelled else { return }
             switch fresh {
             case .success(let planets):
                 self.allPlanets = planets
@@ -60,6 +62,28 @@ final class PlanetListViewModel: ObservableObject {
                 if self.allPlanets.isEmpty {
                     self.uiState = .error(message: error.localizedDescription)
                 }
+            }
+        }
+
+        refreshTask = task
+        await withTaskCancellationHandler {
+            await task.value
+        } onCancel: {
+            task.cancel()
+        }
+    }
+
+    func deleteItem(id: Int) async {
+        let result = await repository.deleteItem(id: id)
+        switch result {
+        case .success:
+            withAnimation(.easeInOut) {
+                allPlanets.removeAll { $0.id == id }
+                publish()
+            }
+        case .failure(let error):
+            if allPlanets.isEmpty {
+                uiState = .error(message: error.localizedDescription)
             }
         }
     }

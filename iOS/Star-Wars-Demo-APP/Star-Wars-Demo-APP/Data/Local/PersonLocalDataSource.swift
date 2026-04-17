@@ -64,6 +64,14 @@ actor PersonLocalDataSource {
         try context.save()
     }
 
+    func deletePerson(id: Int) throws {
+        let context = makeContext()
+        let descriptor = FetchDescriptor<PersonSwiftDataModel>(predicate: #Predicate { $0.id == id })
+        guard let model = try context.fetch(descriptor).first else { return }
+        context.delete(model)
+        try context.save()
+    }
+
     func deleteAllPeople() throws {
         let context = makeContext()
         try context.delete(model: PersonSwiftDataModel.self)
