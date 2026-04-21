@@ -1,5 +1,6 @@
 package com.dam.starwarsapp.ui.screens.detail
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -45,12 +46,15 @@ class FilmDetailViewModel @Inject constructor(
     private var vimeoJob: Job? = null
 
     init {
+        Log.d(TAG, "FilmDetailViewModel init (filmId=$filmId)")
         viewModelScope.launch {
             filmFlow
                 .map { it?.title?.trim().orEmpty() }
                 .distinctUntilChanged()
                 .collectLatest { title ->
+                    Log.d(TAG, "Film title observed: \"$title\"")
                     if (title.isBlank()) {
+                        Log.w(TAG, "Blank film title -> clearing Vimeo state")
                         _vimeoVideo.value = null
                         _isVimeoLoading.value = false
                     } else {
@@ -61,12 +65,19 @@ class FilmDetailViewModel @Inject constructor(
     }
 
     fun loadVimeoVideo(title: String) {
+        Log.d(TAG, "loadVimeoVideo(title=\"$title\")")
         vimeoJob?.cancel()
         vimeoJob = viewModelScope.launch {
             _isVimeoLoading.value = true
-            _vimeoVideo.value = vimeoRepository.searchVimeoVideo(title).firstOrNull()
+            val result = vimeoRepository.searchVimeoVideo(title).firstOrNull()
+            Log.d(TAG, "Vimeo search completed. uri=${result?.uri ?: "<null>"} playbackUrl=${result?.playbackUrl ?: "<null>"}")
+            _vimeoVideo.value = result
             _isVimeoLoading.value = false
         }
+    }
+
+    private companion object {
+        const val TAG = "FilmDetailVM"
     }
 }
 

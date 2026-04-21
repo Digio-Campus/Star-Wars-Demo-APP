@@ -22,7 +22,10 @@ class VimeoRepositoryImpl @Inject constructor(
 
     override fun searchVimeoVideo(filmTitle: String): Flow<VimeoVideo?> = flow {
         val key = filmTitle.trim().lowercase()
+        Log.d(TAG, "searchVimeoVideo(title=\"$filmTitle\", key=\"$key\")")
+
         if (key.isBlank()) {
+            Log.w(TAG, "Blank title; skipping Vimeo search")
             emit(null)
             return@flow
         }
@@ -30,6 +33,7 @@ class VimeoRepositoryImpl @Inject constructor(
         val cached = cacheMutex.withLock { cache[key] }
         val hasKey = cacheMutex.withLock { cache.containsKey(key) }
         if (hasKey) {
+            Log.d(TAG, "Cache hit for key=\"$key\" -> ${cached?.uri ?: "<null>"}")
             emit(cached)
             return@flow
         }
@@ -39,25 +43,57 @@ class VimeoRepositoryImpl @Inject constructor(
             cacheMutex.withLock { cache[key] = null }
             emit(null)
             return@flow
+        } else {
+            Log.d(TAG, "Vimeo token present (len=${BuildConfig.VIMEO_TOKEN.length}, redacted=${redactToken(BuildConfig.VIMEO_TOKEN)})")
         }
 
         val result = runCatching {
-            val first = service.searchVideos(query = filmTitle, perPage = 1).data.firstOrNull()
-                ?: return@runCatching null
+            val search = service.searchVideos(query = filmTitle, perPage = 1)
+            Log.d(TAG, "Search parsed: items=${search.data.size}")
 
-            val uri = first.uri?.takeIf { it.isNotBlank() } ?: return@runCatching null
+            val first = search.data.firstOrNull()
+            if (first == null) {
+                Log.w(TAG, "No Vimeo results for title=\"$filmTitle\"")
+                return@runCatching null
+            }
+
+            Log.d(TAG, "First item parsed: uri=${first.uri}, link=${first.link}, name=${first.name}")
+
+            val uri = first.uri?.takeIf { it.isNotBlank() }
+            if (uri == null) {
+                Log.w(TAG, "First result has no uri; cannot fetch details")
+                return@runCatching null
+            }
+
             val link = first.link.orEmpty()
             val name = first.name.orEmpty()
 
-            val playbackUrl = extractVideoId(uri)
-                ?.let { videoId ->
-                    val details = service.getVideoDetails(videoId)
-                    details.play
-                        ?.progressive
-                        ?.filter { !it.link.isNullOrBlank() }
-                        ?.maxByOrNull { it.height ?: 0 }
-                        ?.link
+            val videoId = extractVideoId(uri)
+            Log.d(TAG, "Extracted videoId=${videoId ?: "<null>"} from uri=\"$uri\"")
+
+            val playbackUrl = videoId
+                ?.let { id ->
+                    val details = service.getVideoDetails(id)
+                    val progressive = details.play?.progressive.orEmpty()
+                    Log.d(TAG, "Details parsed: play.progressive count=${progressive.size}")
+
+                    val selected = progressive
+                        .filter { !it.link.isNullOrBlank() }
+                        .maxByOrNull { it.height ?: 0 }
+
+                    if (selected == null) {
+                        Log.w(TAG, "No progressive playback links available for videoId=$id")
+                        null
+                    } else {
+                        Log.d(
+                            TAG,
+                            "Selected progressive: height=${selected.height}, quality=${selected.quality}, mime=${selected.mime}, type=${selected.type}, link=${selected.link}",
+                        )
+                        selected.link
+                    }
                 }
+
+            Log.d(TAG, "Final VimeoVideo: uri=\"$uri\", link=\"$link\", name=\"$name\", playbackUrl=${playbackUrl ?: "<null>"}")
 
             VimeoVideo(
                 uri = uri,
@@ -73,6 +109,13 @@ class VimeoRepositoryImpl @Inject constructor(
         cacheMutex.withLock { cache[key] = result }
         emit(result)
     }.flowOn(Dispatchers.IO)
+
+    private fun redactToken(token: String): String {
+        val t = token.trim()
+        if (t.isBlank()) return "<missing>"
+        if (t.length <= 10) return "<redacted>"
+        return t.take(6) + "…" + t.takeLast(4)
+    }
 
     private fun extractVideoId(uri: String): String? {
         // Expected: "/videos/{id}" (e.g. "/videos/123456789")
