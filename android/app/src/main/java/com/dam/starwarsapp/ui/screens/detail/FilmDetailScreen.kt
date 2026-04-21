@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +20,8 @@ fun FilmDetailScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val film = state.film
+    val vimeoVideo by viewModel.vimeoVideo.collectAsState()
+    val isVimeoLoading by viewModel.isVimeoLoading.collectAsState()
 
     ImmersiveDetailScaffold(
         title = film?.title ?: "Película",
@@ -81,6 +84,17 @@ fun FilmDetailScreen(
                     )
                 }
 
+                DetailSectionCard(
+                    title = "Video",
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (isVimeoLoading) {
+                        CircularProgressIndicator()
+                    } else {
+                        VimeoPlayerScreen(vimeoVideo = vimeoVideo)
+                    }
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -125,6 +139,15 @@ fun FilmDetailScreen(
                     softWrap = true,
                 )
             }
+
+            DetailSectionCard(title = "Video") {
+                if (isVimeoLoading) {
+                    CircularProgressIndicator()
+                } else {
+                    VimeoPlayerScreen(vimeoVideo = vimeoVideo)
+                }
+            }
+
             DetailSectionCard(title = "Metadatos") {
                 DetailFieldsList(fields = meta)
             }
