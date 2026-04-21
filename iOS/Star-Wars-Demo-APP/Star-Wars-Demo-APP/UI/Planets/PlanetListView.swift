@@ -76,7 +76,8 @@ struct PlanetListView: View {
                         Button(role: .destructive) {
                             deletePlanet(planet)
                         } label: {
-                            Text("DELETE")
+                            Image(systemName: "trash.fill")
+                                .foregroundColor(.white)
                         }
                         .tint(.red)
                     }

@@ -76,7 +76,8 @@ struct StarshipListView: View {
                         Button(role: .destructive) {
                             deleteStarship(starship)
                         } label: {
-                            Text("DELETE")
+                            Image(systemName: "trash.fill")
+                                .foregroundColor(.white)
                         }
                         .tint(.red)
                     }

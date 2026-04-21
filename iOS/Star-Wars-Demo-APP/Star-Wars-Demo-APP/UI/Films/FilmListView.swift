@@ -77,7 +77,8 @@ struct FilmListView: View {
                         Button(role: .destructive) {
                             deleteFilm(film)
                         } label: {
-                            Text("DELETE")
+                            Image(systemName: "trash.fill")
+                                .foregroundColor(.white)
                         }
                         .tint(.red)
                     }

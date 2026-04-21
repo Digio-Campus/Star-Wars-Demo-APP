@@ -76,7 +76,8 @@ struct PersonListView: View {
                         Button(role: .destructive) {
                             deletePerson(person)
                         } label: {
-                            Text("DELETE")
+                            Image(systemName: "trash.fill")
+                                .foregroundColor(.white)
                         }
                         .tint(.red)
                     }
