@@ -16,9 +16,17 @@ final class DependencyContainer {
     let planetRepository: PlanetRepository
     let starshipRepository: StarshipRepository
 
-    init(modelContainer: ModelContainer, apiService: StarWarsAPIServiceProtocol = StarWarsAPIService()) {
+    let vimeoService: VimeoServiceProtocol
+    let vimeoRepository: VimeoRepository
+
+    init(
+        modelContainer: ModelContainer,
+        apiService: StarWarsAPIServiceProtocol = StarWarsAPIService(),
+        vimeoService: VimeoServiceProtocol = VimeoService()
+    ) {
         self.modelContainer = modelContainer
         self.apiService = apiService
+        self.vimeoService = vimeoService
 
         self.filmLocalDataSource = FilmLocalDataSource(container: modelContainer)
         self.personLocalDataSource = PersonLocalDataSource(container: modelContainer)
@@ -29,5 +37,7 @@ final class DependencyContainer {
         self.personRepository = PersonRepositoryImpl(api: apiService, local: personLocalDataSource)
         self.planetRepository = PlanetRepositoryImpl(api: apiService, local: planetLocalDataSource)
         self.starshipRepository = StarshipRepositoryImpl(api: apiService, local: starshipLocalDataSource)
+
+        self.vimeoRepository = VimeoRepositoryImpl(service: vimeoService)
     }
 }

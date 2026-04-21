@@ -7,8 +7,8 @@ struct FilmDetailView: View {
 
     private static let scrollSpaceName = "film-detail-scroll"
 
-    init(repository: FilmRepository, filmId: Int) {
-        _viewModel = StateObject(wrappedValue: FilmDetailViewModel(filmId: filmId, repository: repository))
+    init(repository: FilmRepository, vimeoRepository: VimeoRepository, filmId: Int) {
+        _viewModel = StateObject(wrappedValue: FilmDetailViewModel(filmId: filmId, repository: repository, vimeoRepository: vimeoRepository))
     }
 
     var body: some View {
@@ -57,6 +57,45 @@ struct FilmDetailView: View {
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 12)
+                        }
+                        .containerRelativeFrame(.horizontal)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, 16)
+
+                        FullWidthSection {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Video")
+                                    .font(.headline)
+                                    .foregroundStyle(StarWarsColors.primary)
+
+                                if viewModel.isLoadingVimeoVideo {
+                                    LoadingView()
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 24)
+                                } else {
+                                    VimeoPlayerView(videoURL: viewModel.vimeoVideo?.playbackURL)
+
+                                    if viewModel.vimeoVideo?.playbackURL == nil {
+                                        if let message = viewModel.vimeoErrorMessage {
+                                            VStack(alignment: .leading, spacing: 8) {
+                                                Text(message)
+                                                    .font(.footnote)
+                                                    .foregroundStyle(.secondary)
+
+                                                Button("Retry") {
+                                                    Task { await viewModel.loadVimeoVideo() }
+                                                }
+                                                .buttonStyle(.bordered)
+                                                .tint(StarWarsColors.primary)
+                                            }
+                                        } else {
+                                            Text("No video available")
+                                                .font(.footnote)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                }
+                            }
                         }
                         .containerRelativeFrame(.horizontal)
                         .frame(maxWidth: .infinity, alignment: .leading)

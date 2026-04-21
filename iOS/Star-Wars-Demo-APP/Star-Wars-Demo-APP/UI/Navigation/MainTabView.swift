@@ -5,7 +5,7 @@ struct MainTabView: View {
 
     var body: some View {
         TabView {
-            FilmListView(repository: dependencies.filmRepository)
+            FilmListView(repository: dependencies.filmRepository, vimeoRepository: dependencies.vimeoRepository)
                 .tabItem {
                     Label("Films", systemImage: "film")
                 }

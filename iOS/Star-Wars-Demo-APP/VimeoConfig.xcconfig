@@ -1,0 +1,13 @@
+// Shared Vimeo configuration.
+//
+// Create a local (unversioned) "Config.xcconfig" next to this file and define:
+//   VIMEO_ACCESS_TOKEN = <your_token>
+//
+// Default to empty so the app can build without secrets.
+VIMEO_ACCESS_TOKEN =
+
+// Local override (unversioned).
+#include? "Config.xcconfig"
+
+// Expose the token to runtime via generated Info.plist.
+INFOPLIST_KEY_VIMEO_ACCESS_TOKEN = $(VIMEO_ACCESS_TOKEN)

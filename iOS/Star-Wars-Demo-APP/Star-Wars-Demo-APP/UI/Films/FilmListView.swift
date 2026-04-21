@@ -2,12 +2,14 @@ import SwiftUI
 
 struct FilmListView: View {
     private let repository: FilmRepository
+    private let vimeoRepository: VimeoRepository
 
     @StateObject private var viewModel: FilmListViewModel
     private let title = "Star Wars Films"
 
-    init(repository: FilmRepository) {
+    init(repository: FilmRepository, vimeoRepository: VimeoRepository) {
         self.repository = repository
+        self.vimeoRepository = vimeoRepository
         _viewModel = StateObject(wrappedValue: FilmListViewModel(repository: repository))
     }
 
@@ -21,7 +23,7 @@ struct FilmListView: View {
                     await viewModel.loadFilms()
                 }
                 .navigationDestination(for: Int.self) { filmId in
-                    FilmDetailView(repository: repository, filmId: filmId)
+                    FilmDetailView(repository: repository, vimeoRepository: vimeoRepository, filmId: filmId)
                 }
         }
     }

@@ -24,6 +24,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		36A11D0C2F74BEEF00C0FFEE /* VimeoConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = VimeoConfig.xcconfig; sourceTree = "<group>"; };
 		362942742F73FED900DE0E80 /* Star-Wars-Demo-APP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Star-Wars-Demo-APP.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		362942862F73FEDB00DE0E80 /* Star-Wars-Demo-APPTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Star-Wars-Demo-APPTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		362942902F73FEDB00DE0E80 /* Star-Wars-Demo-APPUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Star-Wars-Demo-APPUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -390,6 +391,7 @@
 		};
 		3629429B2F73FEDB00DE0E80 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 36A11D0C2F74BEEF00C0FFEE /* VimeoConfig.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -418,6 +420,7 @@
 		};
 		3629429C2F73FEDB00DE0E80 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 36A11D0C2F74BEEF00C0FFEE /* VimeoConfig.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
