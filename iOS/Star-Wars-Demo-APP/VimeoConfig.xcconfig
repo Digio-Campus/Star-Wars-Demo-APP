@@ -3,6 +3,7 @@
 // Create a local (unversioned) "Config.xcconfig" next to this file and define:
 //   VIMEO_ACCESS_TOKEN = <your_token>
 //
+// You can copy from "Config.xcconfig.example".
 // Default to empty so the app can build without secrets.
 VIMEO_ACCESS_TOKEN =
 

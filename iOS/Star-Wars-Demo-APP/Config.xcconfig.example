@@ -1,0 +1,7 @@
+// Local (unversioned) config for Vimeo.
+//
+// Copy this file to "Config.xcconfig" (ignored by git) and set your token:
+//   VIMEO_ACCESS_TOKEN = <your_token>
+//
+// NOTE: Do NOT commit real tokens.
+VIMEO_ACCESS_TOKEN =

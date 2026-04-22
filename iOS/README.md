@@ -2,13 +2,20 @@ Directorio con la app iOS
 
 ## Vimeo (iOS)
 
-1. Crea el archivo local **no versionado**:
+1. Crea el archivo local **no versionado** (ignorado por git):
    `iOS/Star-Wars-Demo-APP/Config.xcconfig`
 
-   Contenido:
+   Puedes copiar la plantilla:
+   ```bash
+   cp iOS/Star-Wars-Demo-APP/Config.xcconfig.example iOS/Star-Wars-Demo-APP/Config.xcconfig
+   ```
+
+   Y editarlo con tu token:
    ```xcconfig
    VIMEO_ACCESS_TOKEN = <your_token>
    ```
+
+   Alternativa (local/dev): también puedes definir la variable de entorno `VIMEO_ACCESS_TOKEN` en el Scheme de Xcode.
 
 2. Compilar en Mac (sin firmar):
    ```bash

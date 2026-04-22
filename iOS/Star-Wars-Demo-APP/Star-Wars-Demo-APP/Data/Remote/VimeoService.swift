@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 enum VimeoAPIError: LocalizedError {
     case missingAccessToken
@@ -9,7 +10,17 @@ enum VimeoAPIError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingAccessToken:
-            return "Missing Vimeo access token"
+            return """
+            Missing Vimeo access token.
+
+            Fix options:
+            1) Create local (unversioned) iOS/Star-Wars-Demo-APP/Config.xcconfig with:
+               VIMEO_ACCESS_TOKEN = <your_token>
+               (VimeoConfig.xcconfig maps it into the generated Info.plist key VIMEO_ACCESS_TOKEN)
+
+            2) Or set an environment variable for the Run scheme:
+               VIMEO_ACCESS_TOKEN = <your_token>
+            """
         case .invalidURL:
             return "Invalid Vimeo URL"
         case .invalidResponse:
@@ -30,17 +41,66 @@ protocol VimeoAccessTokenProviding {
 }
 
 struct BundleVimeoAccessTokenProvider: VimeoAccessTokenProviding {
+    private let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "Star-Wars-Demo-APP",
+        category: "Vimeo"
+    )
+
     func accessToken() -> String? {
-        let raw = Bundle.main.object(forInfoDictionaryKey: "VIMEO_ACCESS_TOKEN") as? String
-        let token = raw?.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let token, !token.isEmpty { return token }
-
-        // Handy for local/dev automation.
-        let env = ProcessInfo.processInfo.environment["VIMEO_ACCESS_TOKEN"]
-        let envToken = env?.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let envToken, !envToken.isEmpty { return envToken }
-
+        if let token = tokenFromInfoPlist() { return token }
+        if let token = tokenFromEnvironment() { return token }
         return nil
+    }
+
+    private func tokenFromInfoPlist() -> String? {
+        let raw = Bundle.main.object(forInfoDictionaryKey: "VIMEO_ACCESS_TOKEN") as? String
+        guard let raw else {
+            logger.debug("Vimeo token lookup: Info.plist key VIMEO_ACCESS_TOKEN is missing")
+            return nil
+        }
+
+        let token = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !token.isEmpty else {
+            logger.debug("Vimeo token lookup: Info.plist key VIMEO_ACCESS_TOKEN is present but empty")
+            return nil
+        }
+
+        // If the build setting wasn't applied, we can sometimes end up with an unexpanded placeholder.
+        if token.contains("$(") {
+            logger.debug("Vimeo token lookup: Info.plist key VIMEO_ACCESS_TOKEN looks unexpanded: \(self.redact(token))")
+            return nil
+        }
+
+        logger.debug("Vimeo token lookup: using Info.plist VIMEO_ACCESS_TOKEN=\(self.redact(token))")
+        return token
+    }
+
+    private func tokenFromEnvironment() -> String? {
+        // Handy for local/dev automation via Xcode scheme env vars.
+        let env = ProcessInfo.processInfo.environment["VIMEO_ACCESS_TOKEN"]
+        guard let env else {
+            logger.debug("Vimeo token lookup: env var VIMEO_ACCESS_TOKEN is missing")
+            return nil
+        }
+
+        let token = env.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !token.isEmpty else {
+            logger.debug("Vimeo token lookup: env var VIMEO_ACCESS_TOKEN is present but empty")
+            return nil
+        }
+
+        logger.debug("Vimeo token lookup: using env VIMEO_ACCESS_TOKEN=\(self.redact(token))")
+        return token
+    }
+
+    private func redact(_ token: String) -> String {
+        let trimmed = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        let count = trimmed.count
+        guard count > 8 else { return "<redacted len=\(count)>" }
+
+        let prefix = trimmed.prefix(4)
+        let suffix = trimmed.suffix(4)
+        return "\(prefix)…\(suffix) (len=\(count))"
     }
 }
 
