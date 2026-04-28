@@ -15,19 +15,11 @@ struct VideoResolverTests {
         func resolvePlayback(for candidate: VideoCandidate) async throws -> PlaybackTarget? { playback }
     }
 
-    private final class StubVimeoRepo: VimeoRepository {
-        let video: VimeoVideo?
-        init(video: VimeoVideo?) { self.video = video }
-        func searchVimeoVideo(title: String) async throws -> VimeoVideo? { video }
-    }
-
-    @Test func youtubePreferredOverVimeo() async throws {
+    @Test func returnsYouTubeEmbedded() async throws {
         let ytCandidate = VideoCandidate(provider: "youtube", contentId: "abc123", title: "Test", thumbnailURL: nil, watchURL: URL(string: "https://youtube.test/watch?v=abc123"))
         let stubYT = StubYouTube(candidate: ytCandidate, playback: .embedded(URL(string: "https://www.youtube.com/embed/abc123")!))
-        let stubVimeo = StubVimeoRepo(video: VimeoVideo(uri: "/videos/1", link: "https://vimeo.com/1", name: "V", playbackURL: nil))
+        let resolver = VideoResolverImpl(youtubeProvider: stubYT)
 
-        let resolver = VideoResolverImpl(youtubeProvider: (stubYT as! YouTubeProvider), vimeoRepository: stubVimeo)
-        // Note: VideoResolverImpl expects a YouTubeProvider actor; to keep test simple, call the resolver via dynamic dispatch
         if let result = try await resolver.resolveVideo(title: "Test") {
             #expect(result.candidate.provider == "youtube")
             if case .embedded = result.target { }
@@ -37,18 +29,10 @@ struct VideoResolverTests {
         }
     }
 
-    @Test func vimeoFallbackWhenYoutubeMissing() async throws {
+    @Test func returnsNilWhenNoProviders() async throws {
         let stubYT = StubYouTube(candidate: nil, playback: nil)
-        let vimeoVideo = VimeoVideo(uri: "/videos/999", link: "https://vimeo.com/999", name: "V999", playbackURL: URL(string: "https://cdn.vimeo.com/stream.m3u8"))
-        let stubVimeo = StubVimeoRepo(video: vimeoVideo)
-
-        let resolver = VideoResolverImpl(youtubeProvider: (stubYT as! YouTubeProvider), vimeoRepository: stubVimeo)
-        if let result = try await resolver.resolveVideo(title: "Whatever") {
-            #expect(result.candidate.provider == "vimeo")
-            if case .directStream = result.target { }
-            else { #expect(Bool(false)) }
-        } else {
-            #expect(Bool(false))
-        }
+        let resolver = VideoResolverImpl(youtubeProvider: stubYT)
+        let result = try await resolver.resolveVideo(title: "None")
+        #expect(result == nil)
     }
 }
