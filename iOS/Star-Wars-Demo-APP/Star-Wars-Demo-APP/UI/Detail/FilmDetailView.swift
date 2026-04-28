@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct FilmDetailView: View {
     @StateObject private var viewModel: FilmDetailViewModel
@@ -61,6 +62,61 @@ struct FilmDetailView: View {
                         .containerRelativeFrame(.horizontal)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.top, 16)
+
+                        FullWidthSection {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Video")
+                                    .font(.headline)
+                                    .foregroundStyle(StarWarsColors.primary)
+
+                                if viewModel.isLoadingVideo {
+                                    LoadingView()
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 24)
+                                } else if let target = viewModel.playbackTarget {
+                                    switch target {
+                                    case .embedded(let url):
+                                        YouTubeWebPlayerView(embedURL: url)
+                                            .frame(maxWidth: .infinity)
+                                            .aspectRatio(16/9, contentMode: .fit)
+                                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                                    case .directStream(let url):
+                                        // Direct stream player is not implemented; show external open button
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            Text("Direct stream available")
+                                                .font(.subheadline)
+                                                .foregroundStyle(.secondary)
+
+                                            if let videoURL = url {
+                                                Button("Open in Safari") {
+                                                    UIApplication.shared.open(videoURL)
+                                                }
+                                                .buttonStyle(.bordered)
+                                                .tint(StarWarsColors.primary)
+                                            }
+                                        }
+
+                                    case .external(let url):
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            Text("Open video externally")
+                                                .font(.subheadline)
+                                                .foregroundStyle(.secondary)
+
+                                            Button("Open in Safari") {
+                                                UIApplication.shared.open(url)
+                                            }
+                                            .buttonStyle(.bordered)
+                                            .tint(StarWarsColors.primary)
+                                        }
+                                    }
+                                } else {
+                                    Text("No video available")
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
 
                         Color.clear
                             .frame(height: 16)
