@@ -7,8 +7,8 @@ struct FilmDetailView: View {
 
     private static let scrollSpaceName = "film-detail-scroll"
 
-    init(repository: FilmRepository, filmId: Int) {
-        _viewModel = StateObject(wrappedValue: FilmDetailViewModel(filmId: filmId, repository: repository))
+    init(repository: FilmRepository, videoResolver: VideoResolver? = nil, filmId: Int) {
+        _viewModel = StateObject(wrappedValue: FilmDetailViewModel(filmId: filmId, repository: repository, videoResolver: videoResolver))
     }
 
     var body: some View {
