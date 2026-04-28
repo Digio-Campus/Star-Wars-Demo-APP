@@ -5,7 +5,7 @@ package com.dam.starwarsapp.domain.video
  */
 data class VideoCandidate(
     val id: String,
-    val title: String,
     val provider: String,
-    val embeddable: Boolean = true
+    val embeddable: Boolean = true,
+    val watchUrl: String? = null
 )

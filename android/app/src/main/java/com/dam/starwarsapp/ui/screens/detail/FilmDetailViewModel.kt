@@ -8,6 +8,8 @@ import com.dam.starwarsapp.domain.model.Film
 import com.dam.starwarsapp.domain.model.VimeoVideo
 import com.dam.starwarsapp.domain.repository.FilmRepository
 import com.dam.starwarsapp.domain.repository.VimeoRepository
+import com.dam.starwarsapp.domain.video.PlaybackTarget
+import com.dam.starwarsapp.domain.video.VideoResolver
 import com.dam.starwarsapp.ui.navigation.Destinations
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -29,6 +31,7 @@ class FilmDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     repository: FilmRepository,
     private val vimeoRepository: VimeoRepository,
+    private val videoResolver: VideoResolver,
 ) : ViewModel() {
 
     private val filmId: Int = checkNotNull(savedStateHandle[Destinations.filmIdArg])
@@ -47,6 +50,9 @@ class FilmDetailViewModel @Inject constructor(
     private val _vimeoErrorMessage = MutableStateFlow<String?>(null)
     val vimeoErrorMessage: StateFlow<String?> = _vimeoErrorMessage.asStateFlow()
 
+    private val _playbackTarget = MutableStateFlow<PlaybackTarget?>(null)
+    val playbackTarget: StateFlow<PlaybackTarget?> = _playbackTarget.asStateFlow()
+
     private var vimeoJob: Job? = null
 
     init {
@@ -61,8 +67,10 @@ class FilmDetailViewModel @Inject constructor(
                         Log.w(TAG, "Blank film title -> clearing Vimeo state")
                         _vimeoVideo.value = null
                         _isVimeoLoading.value = false
+                        _playbackTarget.value = null
                     } else {
                         loadVimeoVideo(title)
+                        resolveVideo(title)
                     }
                 }
         }
@@ -79,6 +87,18 @@ class FilmDetailViewModel @Inject constructor(
             Log.d(TAG, "Vimeo search completed. uri=${result?.uri ?: "<null>"} playbackUrl=${result?.playbackUrl ?: "<null>"}")
             _vimeoVideo.value = result
             _isVimeoLoading.value = false
+        }
+    }
+
+    private fun resolveVideo(title: String) {
+        viewModelScope.launch {
+            try {
+                val res = videoResolver.resolve(title)
+                _playbackTarget.value = res.getOrNull()
+            } catch (e: Exception) {
+                Log.w(TAG, "Video resolution failed: ${e.message}", e)
+                _playbackTarget.value = null
+            }
         }
     }
 

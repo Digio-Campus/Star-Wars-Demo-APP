@@ -19,6 +19,10 @@ val vimeoToken = (localProperties.getProperty("VIMEO_ACCESS_TOKEN") ?: "")
     .replace("\\", "\\\\")
     .replace("\"", "\\\"")
 
+val youtubeApiKey = (localProperties.getProperty("YOUTUBE_API_KEY") ?: "")
+    .replace("\\", "\\\\")
+    .replace("\"", "\\\"")
+
 android {
     namespace = "com.dam.starwarsapp"
     compileSdk {
@@ -33,6 +37,7 @@ android {
         versionName = "1.0"
 
         buildConfigField("String", "VIMEO_TOKEN", "\"$vimeoToken\"")
+        buildConfigField("String", "YOUTUBE_API_KEY", "\"$youtubeApiKey\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

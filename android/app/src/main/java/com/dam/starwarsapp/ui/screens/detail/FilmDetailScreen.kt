@@ -1,5 +1,7 @@
 package com.dam.starwarsapp.ui.screens.detail
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,7 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.dam.starwarsapp.domain.video.PlaybackTarget
 
 @Composable
 fun FilmDetailScreen(
@@ -25,6 +29,7 @@ fun FilmDetailScreen(
     val vimeoVideo by viewModel.vimeoVideo.collectAsState()
     val isVimeoLoading by viewModel.isVimeoLoading.collectAsState()
     val vimeoErrorMessage by viewModel.vimeoErrorMessage.collectAsState()
+    val playbackTarget by viewModel.playbackTarget.collectAsState()
 
     ImmersiveDetailScaffold(
         title = film?.title ?: "Película",
@@ -91,10 +96,36 @@ fun FilmDetailScreen(
                     title = "Video",
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    if (isVimeoLoading) {
-                        CircularProgressIndicator()
-                    } else {
-                        VimeoPlayerScreen(vimeoVideo = vimeoVideo)
+                    // Prefer resolved playback target (YouTube/Vimeo) if available
+                    val context = LocalContext.current
+                    when (val target = playbackTarget) {
+                        is PlaybackTarget.Embedded -> {
+                            when (target.provider.lowercase()) {
+                                "youtube" -> {
+                                    YouTubeWebPlayer(videoId = target.videoId)
+                                }
+                                "vimeo" -> {
+                                    VimeoPlayerScreen(vimeoVideo = vimeoVideo)
+                                }
+                                else -> {
+                                    VimeoPlayerScreen(vimeoVideo = vimeoVideo)
+                                }
+                            }
+                        }
+                        is PlaybackTarget.External -> {
+                            OutlinedButton(onClick = {
+                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(target.url)))
+                            }) {
+                                Text("Abrir video")
+                            }
+                        }
+                        else -> {
+                            if (isVimeoLoading) {
+                                CircularProgressIndicator()
+                            } else {
+                                VimeoPlayerScreen(vimeoVideo = vimeoVideo)
+                            }
+                        }
                     }
                 }
 
@@ -144,29 +175,54 @@ fun FilmDetailScreen(
             }
 
             DetailSectionCard(title = "Video") {
-                if (isVimeoLoading) {
-                    CircularProgressIndicator()
-                } else {
-                    VimeoPlayerScreen(vimeoVideo = vimeoVideo)
-
-                        if (vimeoVideo?.playbackUrl.isNullOrBlank()) {
-                            val message = vimeoErrorMessage
-                            if (!message.isNullOrBlank()) {
-                                Text(
-                                    text = message,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(top = 8.dp),
-                                )
-
-                                OutlinedButton(
-                                    onClick = { film?.title?.let(viewModel::loadVimeoVideo) },
-                                    modifier = Modifier.padding(top = 8.dp),
-                                ) {
-                                    Text("Retry")
-                                }
+                val context = LocalContext.current
+                when (val target = playbackTarget) {
+                    is PlaybackTarget.Embedded -> {
+                        when (target.provider.lowercase()) {
+                            "youtube" -> {
+                                YouTubeWebPlayer(videoId = target.videoId)
+                            }
+                            "vimeo" -> {
+                                VimeoPlayerScreen(vimeoVideo = vimeoVideo)
+                            }
+                            else -> {
+                                VimeoPlayerScreen(vimeoVideo = vimeoVideo)
                             }
                         }
+                    }
+                    is PlaybackTarget.External -> {
+                        OutlinedButton(onClick = {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(target.url)))
+                        }) {
+                            Text("Abrir video")
+                        }
+                    }
+                    else -> {
+                        if (isVimeoLoading) {
+                            CircularProgressIndicator()
+                        } else {
+                            VimeoPlayerScreen(vimeoVideo = vimeoVideo)
+
+                                if (vimeoVideo?.playbackUrl.isNullOrBlank()) {
+                                    val message = vimeoErrorMessage
+                                    if (!message.isNullOrBlank()) {
+                                        Text(
+                                            text = message,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(top = 8.dp),
+                                        )
+
+                                        OutlinedButton(
+                                            onClick = { film?.title?.let(viewModel::loadVimeoVideo) },
+                                            modifier = Modifier.padding(top = 8.dp),
+                                        ) {
+                                            Text("Retry")
+                                        }
+                                    }
+                                }
+                        }
+                    }
                 }
             }
 
