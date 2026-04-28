@@ -19,6 +19,11 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.dam.starwarsapp.domain.model.VimeoVideo
+import com.dam.starwarsapp.util.AppLog
+
+private class PlayerViewHolder {
+    var playerView: PlayerView? = null
+}
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
@@ -43,6 +48,8 @@ fun VimeoPlayerScreen(
         }
         return
     }
+
+    val holder = remember { PlayerViewHolder() }
 
     val exoPlayer = remember(playbackUrl) {
         runCatching {
@@ -70,7 +77,15 @@ fun VimeoPlayerScreen(
     }
 
     DisposableEffect(exoPlayer) {
+        AppLog.d(TAG, "ExoPlayer@${exoPlayer.hashCode()} created for url=$playbackUrl")
         onDispose {
+            val pv = holder.playerView
+            AppLog.d(TAG, "Disposing ExoPlayer@${exoPlayer.hashCode()} PlayerView@${pv?.hashCode()}")
+            holder.playerView = null
+
+            runCatching { pv?.player = null }
+            runCatching { exoPlayer.stop() }
+            runCatching { exoPlayer.clearMediaItems() }
             runCatching { exoPlayer.release() }
         }
     }
@@ -84,7 +99,19 @@ fun VimeoPlayerScreen(
                 player = exoPlayer
                 useController = true
                 resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+
+                holder.playerView = this
+                AppLog.d(TAG, "Created PlayerView@${hashCode()} bound to ExoPlayer@${exoPlayer.hashCode()}")
+            }
+        },
+        update = { view ->
+            if (view.player !== exoPlayer) {
+                AppLog.d(TAG, "Rebinding PlayerView@${view.hashCode()} -> ExoPlayer@${exoPlayer.hashCode()}")
+                view.player = exoPlayer
+                holder.playerView = view
             }
         },
     )
 }
+
+private const val TAG = "VimeoPlayer"
