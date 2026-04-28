@@ -1,5 +1,10 @@
 /*
-  Example local Config.xcconfig for YouTube API key.
-  Copy to Config.xcconfig and add to .gitignore. Do NOT commit real keys.
+ Example local Config.xcconfig for Vimeo and YouTube.
+ Copy to Config.xcconfig (ignored by git) and set your tokens:
+   VIMEO_ACCESS_TOKEN = <your_token>
+   YOUTUBE_API_KEY = <your_key>
+ Do NOT commit real keys.
 */
-YOUTUBE_API_KEY = YOUR_YOUTUBE_API_KEY_GOES_HERE
+
+VIMEO_ACCESS_TOKEN =
+YOUTUBE_API_KEY =
