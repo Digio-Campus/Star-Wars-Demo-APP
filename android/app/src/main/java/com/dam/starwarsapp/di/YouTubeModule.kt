@@ -29,4 +29,11 @@ object YouTubeModule {
             .build()
             .create(YouTubeService::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideYouTubeProvider(
+        service: YouTubeService,
+    ): com.dam.starwarsapp.data.provider.YouTubeProvider = com.dam.starwarsapp.data.provider.YouTubeProvider(service)
 }
+

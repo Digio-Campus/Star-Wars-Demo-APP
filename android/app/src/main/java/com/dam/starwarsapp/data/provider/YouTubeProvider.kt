@@ -3,13 +3,9 @@ package com.dam.starwarsapp.data.provider
 import com.dam.starwarsapp.BuildConfig
 import com.dam.starwarsapp.data.remote.YouTubeService
 import com.dam.starwarsapp.domain.video.VideoCandidate
-import com.dam.starwarsapp.domain.video.PlaybackTarget
 import com.dam.starwarsapp.domain.video.VideoProvider
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class YouTubeProvider @Inject constructor(
+class YouTubeProvider(
     private val service: YouTubeService,
 ) : VideoProvider {
 
