@@ -2,11 +2,9 @@ import Foundation
 
 actor VideoResolverImpl: VideoResolver {
     private let youtubeProvider: VideoProvider
-    private let vimeoRepository: VimeoRepository
 
-    init(youtubeProvider: VideoProvider, vimeoRepository: VimeoRepository) {
+    init(youtubeProvider: VideoProvider) {
         self.youtubeProvider = youtubeProvider
-        self.vimeoRepository = vimeoRepository
     }
 
     func resolveVideo(title: String) async throws -> (candidate: VideoCandidate, target: PlaybackTarget)? {
@@ -18,24 +16,10 @@ actor VideoResolverImpl: VideoResolver {
                 }
             }
         } catch {
-            // ignore and fallback to Vimeo
+            // bubble up only if auth missing or quota? For now, swallow and treat as not found.
         }
 
-        // Fallback to Vimeo repository
-        do {
-            if let vimeo = try await vimeoRepository.searchVimeoVideo(title: title) {
-                if let playback = vimeo.playbackURL {
-                    let candidate = VideoCandidate(provider: "vimeo", contentId: vimeo.uri, title: vimeo.name, thumbnailURL: nil, watchURL: URL(string: vimeo.link))
-                    return (candidate, .directStream(playback))
-                } else if let linkURL = URL(string: vimeo.link) {
-                    let candidate = VideoCandidate(provider: "vimeo", contentId: vimeo.uri, title: vimeo.name, thumbnailURL: nil, watchURL: linkURL)
-                    return (candidate, .external(linkURL))
-                }
-            }
-        } catch {
-            // ignore
-        }
-
+        // No fallback providers available in this simplified implementation.
         return nil
     }
 }
