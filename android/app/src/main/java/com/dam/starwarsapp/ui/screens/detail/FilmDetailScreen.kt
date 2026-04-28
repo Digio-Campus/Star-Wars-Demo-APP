@@ -5,11 +5,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -125,6 +130,45 @@ fun FilmDetailScreen(
                     softWrap = true,
                 )
             }
+
+            DetailSectionCard(title = "Video") {
+                val playback by viewModel.playbackTarget.collectAsState()
+                val ctx = LocalContext.current
+
+                when (playback) {
+                    is com.dam.starwarsapp.domain.video.PlaybackTarget.Embedded -> {
+                        val id = (playback as com.dam.starwarsapp.domain.video.PlaybackTarget.Embedded).id
+                        YouTubeWebPlayer(embedUrl = "https://www.youtube.com/embed/$id")
+                    }
+
+                    is com.dam.starwarsapp.domain.video.PlaybackTarget.External -> {
+                        val url = (playback as com.dam.starwarsapp.domain.video.PlaybackTarget.External).url
+                        Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
+                            Text(
+                                text = "Vídeo disponible externamente.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+
+                            OutlinedButton(
+                                onClick = { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) },
+                                modifier = Modifier.padding(top = 8.dp),
+                            ) {
+                                Text("Open")
+                            }
+                        }
+                    }
+
+                    else -> {
+                        Text(
+                            text = "No hay vídeo disponible para esta película.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+
             DetailSectionCard(title = "Metadatos") {
                 DetailFieldsList(fields = meta)
             }
