@@ -1,0 +1,5 @@
+/*
+  Example local Config.xcconfig for YouTube API key.
+  Copy to Config.xcconfig and add to .gitignore. Do NOT commit real keys.
+*/
+YOUTUBE_API_KEY = YOUR_YOUTUBE_API_KEY_GOES_HERE
