@@ -39,72 +39,69 @@ class VimeoRepositoryImpl @Inject constructor(
         }
 
         if (BuildConfig.VIMEO_TOKEN.isBlank()) {
-            Log.w(TAG, "Vimeo token is missing; skipping video search")
-            cacheMutex.withLock { cache[key] = null }
-            emit(null)
-            return@flow
+            Log.w(TAG, "Vimeo token is missing; cannot search Vimeo")
+            throw IllegalStateException("Missing Vimeo access token. Set VIMEO_ACCESS_TOKEN in android/local.properties")
         } else {
             Log.d(TAG, "Vimeo token present (len=${BuildConfig.VIMEO_TOKEN.length}, redacted=${redactToken(BuildConfig.VIMEO_TOKEN)})")
         }
 
-        val result = runCatching {
-            val search = service.searchVideos(query = filmTitle, perPage = 1)
-            Log.d(TAG, "Search parsed: items=${search.data.size}")
+        val search = service.searchVideos(query = filmTitle, perPage = 1)
+        Log.d(TAG, "Search parsed: items=${search.data.size}")
 
-            val first = search.data.firstOrNull()
-            if (first == null) {
-                Log.w(TAG, "No Vimeo results for title=\"$filmTitle\"")
-                return@runCatching null
-            }
-
-            Log.d(TAG, "First item parsed: uri=${first.uri}, link=${first.link}, name=${first.name}")
-
-            val uri = first.uri?.takeIf { it.isNotBlank() }
-            if (uri == null) {
-                Log.w(TAG, "First result has no uri; cannot fetch details")
-                return@runCatching null
-            }
-
-            val link = first.link.orEmpty()
-            val name = first.name.orEmpty()
-
-            val videoId = extractVideoId(uri)
-            Log.d(TAG, "Extracted videoId=${videoId ?: "<null>"} from uri=\"$uri\"")
-
-            val playbackUrl = videoId
-                ?.let { id ->
-                    val details = service.getVideoDetails(id)
-                    val progressive = details.play?.progressive.orEmpty()
-                    Log.d(TAG, "Details parsed: play.progressive count=${progressive.size}")
-
-                    val selected = progressive
-                        .filter { !it.link.isNullOrBlank() }
-                        .maxByOrNull { it.height ?: 0 }
-
-                    if (selected == null) {
-                        Log.w(TAG, "No progressive playback links available for videoId=$id")
-                        null
-                    } else {
-                        Log.d(
-                            TAG,
-                            "Selected progressive: height=${selected.height}, quality=${selected.quality}, mime=${selected.mime}, type=${selected.type}, link=${selected.link}",
-                        )
-                        selected.link
-                    }
-                }
-
-            Log.d(TAG, "Final VimeoVideo: uri=\"$uri\", link=\"$link\", name=\"$name\", playbackUrl=${playbackUrl ?: "<null>"}")
-
-            VimeoVideo(
-                uri = uri,
-                link = link,
-                name = name,
-                playbackUrl = playbackUrl,
-            )
-        }.getOrElse { e ->
-            Log.e(TAG, "Failed to search Vimeo video for title=\"$filmTitle\"", e)
-            null
+        val first = search.data.firstOrNull()
+        if (first == null) {
+            Log.w(TAG, "No Vimeo results for title=\"$filmTitle\"")
+            cacheMutex.withLock { cache[key] = null }
+            emit(null)
+            return@flow
         }
+
+        Log.d(TAG, "First item parsed: uri=${first.uri}, link=${first.link}, name=${first.name}")
+
+        val uri = first.uri?.takeIf { it.isNotBlank() }
+        if (uri == null) {
+            Log.w(TAG, "First result has no uri; cannot fetch details")
+            cacheMutex.withLock { cache[key] = null }
+            emit(null)
+            return@flow
+        }
+
+        val link = first.link.orEmpty()
+        val name = first.name.orEmpty()
+
+        val videoId = extractVideoId(uri)
+        Log.d(TAG, "Extracted videoId=${videoId ?: "<null>"} from uri=\"$uri\"")
+
+        val playbackUrl = videoId
+            ?.let { id ->
+                val details = service.getVideoDetails(id)
+                val progressive = details.play?.progressive.orEmpty()
+                Log.d(TAG, "Details parsed: play.progressive count=${progressive.size}")
+
+                val selected = progressive
+                    .filter { !it.link.isNullOrBlank() }
+                    .maxByOrNull { it.height ?: 0 }
+
+                if (selected == null) {
+                    Log.w(TAG, "No progressive playback links available for videoId=$id")
+                    null
+                } else {
+                    Log.d(
+                        TAG,
+                        "Selected progressive: height=${selected.height}, quality=${selected.quality}, mime=${selected.mime}, type=${selected.type}, link=${selected.link}",
+                    )
+                    selected.link
+                }
+            }
+
+        Log.d(TAG, "Final VimeoVideo: uri=\"$uri\", link=\"$link\", name=\"$name\", playbackUrl=${playbackUrl ?: "<null>"}")
+
+        val result = VimeoVideo(
+            uri = uri,
+            link = link,
+            name = name,
+            playbackUrl = playbackUrl,
+        )
 
         cacheMutex.withLock { cache[key] = result }
         emit(result)

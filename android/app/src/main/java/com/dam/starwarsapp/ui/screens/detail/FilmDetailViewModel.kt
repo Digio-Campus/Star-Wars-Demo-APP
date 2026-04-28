@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import javax.inject.Inject
 
 @HiltViewModel
@@ -42,6 +43,9 @@ class FilmDetailViewModel @Inject constructor(
 
     private val _isVimeoLoading = MutableStateFlow(false)
     val isVimeoLoading: StateFlow<Boolean> = _isVimeoLoading.asStateFlow()
+
+    private val _vimeoErrorMessage = MutableStateFlow<String?>(null)
+    val vimeoErrorMessage: StateFlow<String?> = _vimeoErrorMessage.asStateFlow()
 
     private var vimeoJob: Job? = null
 
@@ -69,10 +73,31 @@ class FilmDetailViewModel @Inject constructor(
         vimeoJob?.cancel()
         vimeoJob = viewModelScope.launch {
             _isVimeoLoading.value = true
-            val result = vimeoRepository.searchVimeoVideo(title).firstOrNull()
+            _vimeoErrorMessage.value = null
+
+            val result = vimeoRepository.safeSearch(title)
             Log.d(TAG, "Vimeo search completed. uri=${result?.uri ?: "<null>"} playbackUrl=${result?.playbackUrl ?: "<null>"}")
             _vimeoVideo.value = result
             _isVimeoLoading.value = false
+        }
+    }
+
+    private suspend fun VimeoRepository.safeSearch(title: String): VimeoVideo? {
+        return try {
+            searchVimeoVideo(title).firstOrNull()
+        } catch (e: IllegalStateException) {
+            Log.w(TAG, "Vimeo config error: ${e.message}")
+            _vimeoErrorMessage.value = e.message
+            null
+        } catch (e: HttpException) {
+            val message = "Vimeo request failed (HTTP ${e.code()})"
+            Log.w(TAG, message, e)
+            _vimeoErrorMessage.value = message
+            null
+        } catch (e: Exception) {
+            Log.e(TAG, "Vimeo search failed", e)
+            _vimeoErrorMessage.value = e.message ?: "Vimeo request failed"
+            null
         }
     }
 

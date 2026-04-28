@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,6 +24,7 @@ fun FilmDetailScreen(
     val film = state.film
     val vimeoVideo by viewModel.vimeoVideo.collectAsState()
     val isVimeoLoading by viewModel.isVimeoLoading.collectAsState()
+    val vimeoErrorMessage by viewModel.vimeoErrorMessage.collectAsState()
 
     ImmersiveDetailScaffold(
         title = film?.title ?: "Película",
@@ -145,6 +148,25 @@ fun FilmDetailScreen(
                     CircularProgressIndicator()
                 } else {
                     VimeoPlayerScreen(vimeoVideo = vimeoVideo)
+
+                        if (vimeoVideo?.playbackUrl.isNullOrBlank()) {
+                            val message = vimeoErrorMessage
+                            if (!message.isNullOrBlank()) {
+                                Text(
+                                    text = message,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 8.dp),
+                                )
+
+                                OutlinedButton(
+                                    onClick = { film?.title?.let(viewModel::loadVimeoVideo) },
+                                    modifier = Modifier.padding(top = 8.dp),
+                                ) {
+                                    Text("Retry")
+                                }
+                            }
+                        }
                 }
             }
 
