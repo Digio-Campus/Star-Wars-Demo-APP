@@ -7,8 +7,8 @@ struct FilmDetailView: View {
 
     private static let scrollSpaceName = "film-detail-scroll"
 
-    init(repository: FilmRepository, vimeoRepository: VimeoRepository, filmId: Int) {
-        _viewModel = StateObject(wrappedValue: FilmDetailViewModel(filmId: filmId, repository: repository, vimeoRepository: vimeoRepository))
+    init(repository: FilmRepository, vimeoRepository: VimeoRepository, videoResolver: VideoResolver, filmId: Int) {
+        _viewModel = StateObject(wrappedValue: FilmDetailViewModel(filmId: filmId, repository: repository, vimeoRepository: vimeoRepository, videoResolver: videoResolver))
     }
 
     var body: some View {
@@ -73,9 +73,15 @@ struct FilmDetailView: View {
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 24)
                                 } else {
-                                    VimeoPlayerView(videoURL: viewModel.vimeoVideo?.playbackURL)
-
-                                    if viewModel.vimeoVideo?.playbackURL == nil {
+                                    if let target = viewModel.playbackTarget {
+                                        switch target {
+                                        case .vimeo(let url):
+                                            VimeoPlayerView(videoURL: url)
+                                        case .embedded(let url):
+                                            YouTubeWebPlayerView(embedURL: url)
+                                                .frame(height: 210)
+                                        }
+                                    } else {
                                         if let message = viewModel.vimeoErrorMessage {
                                             VStack(alignment: .leading, spacing: 8) {
                                                 Text(message)

@@ -18,6 +18,7 @@ final class DependencyContainer {
 
     let vimeoService: VimeoServiceProtocol
     let vimeoRepository: VimeoRepository
+    let videoResolver: VideoResolver
 
     init(
         modelContainer: ModelContainer,
@@ -39,5 +40,6 @@ final class DependencyContainer {
         self.starshipRepository = StarshipRepositoryImpl(api: apiService, local: starshipLocalDataSource)
 
         self.vimeoRepository = VimeoRepositoryImpl(service: vimeoService)
+        self.videoResolver = VideoResolverImpl(vimeoRepository: self.vimeoRepository, youTubeProvider: YouTubeProvider())
     }
 }

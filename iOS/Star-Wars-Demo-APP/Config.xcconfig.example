@@ -1,7 +1,9 @@
-// Local (unversioned) config for Vimeo.
+// Local (unversioned) config for Vimeo and YouTube.
 //
 // Copy this file to "Config.xcconfig" (ignored by git) and set your token:
 //   VIMEO_ACCESS_TOKEN = <your_token>
+//   YOUTUBE_API_KEY = <your_key>
 //
 // NOTE: Do NOT commit real tokens.
 VIMEO_ACCESS_TOKEN =
+YOUTUBE_API_KEY =

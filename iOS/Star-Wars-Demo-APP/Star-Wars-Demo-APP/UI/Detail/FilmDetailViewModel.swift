@@ -14,17 +14,21 @@ final class FilmDetailViewModel: ObservableObject {
     @Published private(set) var isLoadingVimeoVideo: Bool = false
     @Published private(set) var vimeoErrorMessage: String?
 
+    @Published private(set) var playbackTarget: PlaybackTarget?
+
     private let filmId: Int
     private let repository: FilmRepository
     private let vimeoRepository: VimeoRepository
+    private let videoResolver: VideoResolver
 
     private var task: Task<Void, Never>?
     private var lastVimeoTitleKey: String?
 
-    init(filmId: Int, repository: FilmRepository, vimeoRepository: VimeoRepository) {
+    init(filmId: Int, repository: FilmRepository, vimeoRepository: VimeoRepository, videoResolver: VideoResolver) {
         self.filmId = filmId
         self.repository = repository
         self.vimeoRepository = vimeoRepository
+        self.videoResolver = videoResolver
     }
 
     func load() {
@@ -35,6 +39,7 @@ final class FilmDetailViewModel: ObservableObject {
         vimeoErrorMessage = nil
         isLoadingVimeoVideo = false
         lastVimeoTitleKey = nil
+        playbackTarget = nil
 
         task = Task {
             let cached = await repository.getFilmById(filmId)
@@ -69,13 +74,26 @@ final class FilmDetailViewModel: ObservableObject {
         vimeoErrorMessage = nil
         defer { isLoadingVimeoVideo = false }
 
-        do {
-            vimeoVideo = try await vimeoRepository.searchVimeoVideo(title: film.title)
-        } catch is CancellationError {
+        // Try to resolve via the VideoResolver (Vimeo -> YouTube fallback)
+        let target = await videoResolver.resolve(title: film.title)
+        if let t = target {
+            playbackTarget = t
+
+            // If target is vimeo we may want to keep vimeoVideo metadata. Try to fetch.
+            if case .vimeo = t {
+                do {
+                    vimeoVideo = try await vimeoRepository.searchVimeoVideo(title: film.title)
+                } catch {
+                    // ignore; keep vimeoVideo nil
+                }
+            } else {
+                vimeoVideo = nil
+            }
             return
-        } catch {
-            vimeoVideo = nil
-            vimeoErrorMessage = error.localizedDescription
         }
+
+        // No video found
+        playbackTarget = nil
+        vimeoVideo = nil
     }
 }
