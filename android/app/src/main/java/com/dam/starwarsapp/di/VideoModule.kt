@@ -1,7 +1,8 @@
 package com.dam.starwarsapp.di
 
-import com.dam.starwarsapp.data.resolver.VideoResolverImpl
-import com.dam.starwarsapp.domain.repository.VideoResolver
+import com.dam.starwarsapp.data.provider.VideoResolverImpl
+import com.dam.starwarsapp.domain.video.VideoResolver
+import com.dam.starwarsapp.domain.video.VideoProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,7 +16,6 @@ object VideoModule {
     @Provides
     @Singleton
     fun provideVideoResolver(
-        youTubeProvider: com.dam.starwarsapp.data.provider.YouTubeProvider,
-        vimeoRepository: com.dam.starwarsapp.domain.repository.VimeoRepository,
-    ): VideoResolver = VideoResolverImpl(youTubeProvider, vimeoRepository)
+        provider: VideoProvider,
+    ): VideoResolver = VideoResolverImpl(provider)
 }
