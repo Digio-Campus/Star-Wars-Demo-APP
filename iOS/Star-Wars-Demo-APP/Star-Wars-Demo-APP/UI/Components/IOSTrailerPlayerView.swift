@@ -15,6 +15,6 @@ struct IOSTrailerPlayerView: UIViewControllerRepresentable {
     }
 
     static func dismantleUIViewController(_ uiViewController: IOSTrailerPlayer, coordinator: ()) {
-        uiViewController.release()
+        uiViewController.cleanup()
     }
 }

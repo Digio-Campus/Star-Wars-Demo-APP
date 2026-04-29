@@ -1,10 +1,11 @@
 import Foundation
 import UIKit
 
+@MainActor
 protocol TrailerPlayer: AnyObject {
     func load(source: VideoSource)
     func play()
     func pause()
-    func release()
+    func cleanup()
     func enableCasting()
 }
