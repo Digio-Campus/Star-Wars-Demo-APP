@@ -16,7 +16,37 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.lifecycleScope
+import android.view.View
+import android.widget.FrameLayout
+import kotlinx.coroutines.launch
+import com.dam.starwarsapp.domain.video.PlaybackTarget
 import androidx.compose.ui.unit.dp
+
+@Composable
+fun AndroidTrailerPlayerComposableForYouTube(videoId: String, modifier: Modifier = Modifier) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    AndroidView(
+        modifier = modifier,
+        factory = { ctx ->
+            FrameLayout(ctx).apply {
+                val player = com.dam.starwarsapp.data.player.AndroidTrailerPlayer(ctx, lifecycleOwner.lifecycle, this)
+                setTag(player)
+                lifecycleOwner.lifecycleScope.launch {
+                    player.load(com.dam.starwarsapp.domain.video.VideoSource.YouTube(videoId))
+                }
+                addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+                    override fun onViewAttachedToWindow(v: View) {}
+                    override fun onViewDetachedFromWindow(v: View) {
+                        (v.getTag() as? com.dam.starwarsapp.domain.video.TrailerPlayer)?.release()
+                    }
+                })
+            }
+        }
+    )
+}
 import com.dam.starwarsapp.domain.video.PlaybackTarget
 
 @Composable
@@ -102,7 +132,7 @@ fun FilmDetailScreen(
                         is PlaybackTarget.Embedded -> {
                             when (target.provider.lowercase()) {
                                 "youtube" -> {
-                                    YouTubeWebPlayer(videoId = target.videoId)
+                                    AndroidTrailerPlayerComposableForYouTube(videoId = target.videoId)
                                 }
                                 "vimeo" -> {
                                     VimeoPlayerScreen(vimeoVideo = vimeoVideo)
@@ -180,7 +210,7 @@ fun FilmDetailScreen(
                     is PlaybackTarget.Embedded -> {
                         when (target.provider.lowercase()) {
                             "youtube" -> {
-                                YouTubeWebPlayer(videoId = target.videoId)
+                                AndroidTrailerPlayerComposableForYouTube(videoId = target.videoId)
                             }
                             "vimeo" -> {
                                 VimeoPlayerScreen(vimeoVideo = vimeoVideo)

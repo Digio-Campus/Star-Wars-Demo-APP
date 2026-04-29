@@ -74,13 +74,9 @@ struct FilmDetailView: View {
                                         .padding(.vertical, 24)
                                 } else {
                                     if let target = viewModel.playbackTarget {
-                                        switch target {
-                                        case .vimeo(let url):
-                                            VimeoPlayerView(videoURL: url)
-                                        case .embedded(let url):
-                                            YouTubeWebPlayerView(embedURL: url)
-                                                .frame(height: 210)
-                                        }
+                                        let source = target.toVideoSource()
+                                        IOSTrailerPlayerView(source: source)
+                                            .frame(height: 210)
                                     } else {
                                         if let message = viewModel.vimeoErrorMessage {
                                             VStack(alignment: .leading, spacing: 8) {
