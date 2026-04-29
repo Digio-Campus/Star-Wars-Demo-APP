@@ -6,6 +6,7 @@
 // You can copy from "Config.xcconfig.example".
 // Default to empty so the app can build without secrets.
 VIMEO_ACCESS_TOKEN =
+YOUTUBE_API_KEY =
 
 // Local override (unversioned).
 #include? "Config.xcconfig"
