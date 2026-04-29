@@ -47,8 +47,6 @@ fun AndroidTrailerPlayerComposableForYouTube(videoId: String, modifier: Modifier
         }
     )
 }
-import com.dam.starwarsapp.domain.video.PlaybackTarget
-
 @Composable
 fun FilmDetailScreen(
     viewModel: FilmDetailViewModel,

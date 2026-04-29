@@ -14,7 +14,7 @@ import com.dam.starwarsapp.domain.video.TrailerPlayer
 import com.dam.starwarsapp.domain.video.VideoSource
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.StyledPlayerView
+import androidx.media3.ui.PlayerView
 
 /**
  * Simple Android implementation of TrailerPlayer supporting Direct (Media3) and YouTube (WebView iframe).
@@ -27,7 +27,7 @@ class AndroidTrailerPlayer(
 ) : TrailerPlayer {
 
     private var exoPlayer: ExoPlayer? = null
-    private var playerView: StyledPlayerView? = null
+    private var playerView: PlayerView? = null
     private var webView: WebView? = null
     private var lifecycleObserver: DefaultLifecycleObserver? = null
 
@@ -56,7 +56,7 @@ class AndroidTrailerPlayer(
     private fun loadDirect(url: String) {
         releaseMedia()
         exoPlayer = ExoPlayer.Builder(context).build()
-        playerView = StyledPlayerView(context).apply {
+        playerView = PlayerView(context).apply {
             player = exoPlayer
             layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             useController = true
