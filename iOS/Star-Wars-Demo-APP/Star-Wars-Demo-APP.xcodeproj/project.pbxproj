@@ -415,6 +415,8 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				VIMEO_ACCESS_TOKEN = f68eb8c0d934fbb14aa7a68dbde7c15f;
+				YOUTUBE_API_KEY = "AIzaSyA_hKyk9Eo16Vto4_vDkojiNO1VeAHh-eg";
 			};
 			name = Debug;
 		};
@@ -444,6 +446,8 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				VIMEO_ACCESS_TOKEN = f68eb8c0d934fbb14aa7a68dbde7c15f;
+				YOUTUBE_API_KEY = "AIzaSyA_hKyk9Eo16Vto4_vDkojiNO1VeAHh-eg";
 			};
 			name = Release;
 		};
