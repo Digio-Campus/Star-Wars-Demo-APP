@@ -70,7 +70,7 @@ class AndroidTrailerPlayer(
     private fun loadYouTube(videoId: String) {
         releaseMedia()
         webView = WebView(context).apply {
-            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
             settings.javaScriptEnabled = true
             webViewClient = WebViewClient()
             addJavascriptInterface(object {

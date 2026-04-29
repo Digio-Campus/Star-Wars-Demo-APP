@@ -21,6 +21,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
 import android.view.View
 import android.widget.FrameLayout
+import androidx.compose.foundation.layout.height
 import kotlinx.coroutines.launch
 import com.dam.starwarsapp.domain.video.PlaybackTarget
 import androidx.compose.ui.unit.dp
@@ -130,7 +131,7 @@ fun FilmDetailScreen(
                         is PlaybackTarget.Embedded -> {
                             when (target.provider.lowercase()) {
                                 "youtube" -> {
-                                    AndroidTrailerPlayerComposableForYouTube(videoId = target.videoId)
+                                    AndroidTrailerPlayerComposableForYouTube(videoId = target.videoId, modifier = Modifier.height(210.dp))
                                 }
                                 "vimeo" -> {
                                     VimeoPlayerScreen(vimeoVideo = vimeoVideo)
@@ -208,7 +209,7 @@ fun FilmDetailScreen(
                     is PlaybackTarget.Embedded -> {
                         when (target.provider.lowercase()) {
                             "youtube" -> {
-                                AndroidTrailerPlayerComposableForYouTube(videoId = target.videoId)
+                                AndroidTrailerPlayerComposableForYouTube(videoId = target.videoId, modifier = Modifier.height(210.dp))
                             }
                             "vimeo" -> {
                                 VimeoPlayerScreen(vimeoVideo = vimeoVideo)
