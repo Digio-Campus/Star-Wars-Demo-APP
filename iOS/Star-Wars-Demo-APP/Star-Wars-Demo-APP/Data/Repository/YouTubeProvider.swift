@@ -84,28 +84,52 @@ final class YouTubeProvider {
     }
 
     func searchFirst(title: String) async throws -> VideoCandidate? {
-        guard let key = apiKeyProvider.apiKey() else { throw YouTubeAPIError.missingApiKey }
+        logger.debug("YouTube: searching for title: \(title)")
+        guard let key = apiKeyProvider.apiKey() else { 
+            logger.error("YouTube: API Key is missing")
+            throw YouTubeAPIError.missingApiKey 
+        }
 
         var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)
+        let query = title.contains("trailer") ? title : "\(title) trailer"
         components?.queryItems = [
             URLQueryItem(name: "part", value: "snippet"),
-            URLQueryItem(name: "q", value: title),
+            URLQueryItem(name: "q", value: query),
             URLQueryItem(name: "type", value: "video"),
             URLQueryItem(name: "videoEmbeddable", value: "true"),
             URLQueryItem(name: "maxResults", value: "1"),
             URLQueryItem(name: "key", value: key)
         ]
-        guard let url = components?.url else { throw YouTubeAPIError.invalidURL }
+        guard let url = components?.url else { 
+            logger.error("YouTube: Failed to construct URL")
+            throw YouTubeAPIError.invalidURL 
+        }
+
+        logger.debug("YouTube: Request URL: \(url.absoluteString.replacingOccurrences(of: key, with: "REDACTED"))")
 
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
 
         let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse else { throw YouTubeAPIError.invalidResponse }
-        guard (200...299).contains(http.statusCode) else { throw YouTubeAPIError.httpStatus(http.statusCode) }
+        guard let http = response as? HTTPURLResponse else { 
+            logger.error("YouTube: Invalid response type")
+            throw YouTubeAPIError.invalidResponse 
+        }
+        
+        logger.debug("YouTube: Response status code: \(http.statusCode)")
+        
+        if !(200...299).contains(http.statusCode) {
+            if let errorBody = String(data: data, encoding: .utf8) {
+                logger.error("YouTube error body: \(errorBody)")
+            }
+            throw YouTubeAPIError.httpStatus(http.statusCode)
+        }
 
         let dto = try JSONDecoder().decode(SearchResponse.self, from: data)
-        guard let first = dto.items.first, let videoId = first.id.videoId else { return nil }
+        guard let first = dto.items.first, let videoId = first.id.videoId else { 
+            logger.debug("YouTube: No results found for title: \(title)")
+            return nil 
+        }
 
         let watchUrl = URL(string: "https://youtu.be/\(videoId)")!
         let thumbnailStr = first.snippet.thumbnails.medium?.url ?? first.snippet.thumbnails.default?.url
