@@ -93,6 +93,7 @@ final class YouTubeProvider {
             URLQueryItem(name: "q", value: query),
             URLQueryItem(name: "type", value: "video"),
             URLQueryItem(name: "videoEmbeddable", value: "true"),
+            URLQueryItem(name: "videoSyndicated", value: "true"),
             URLQueryItem(name: "maxResults", value: "1"),
             URLQueryItem(name: "key", value: key)
         ]
