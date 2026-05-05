@@ -3,6 +3,14 @@ import SwiftData
 
 @MainActor
 final class DependencyContainer {
+    static func makeDefaultSession() -> URLSession {
+        let config = URLSessionConfiguration.default
+        // Avoid indefinite-looking spinners on flaky networks.
+        config.timeoutIntervalForRequest = 15
+        config.timeoutIntervalForResource = 30
+        return URLSession(configuration: config)
+    }
+
     let modelContainer: ModelContainer
     let apiService: StarWarsAPIServiceProtocol
 
@@ -22,8 +30,8 @@ final class DependencyContainer {
 
     init(
         modelContainer: ModelContainer,
-        apiService: StarWarsAPIServiceProtocol = StarWarsAPIService(),
-        vimeoService: VimeoServiceProtocol = VimeoService()
+        apiService: StarWarsAPIServiceProtocol = StarWarsAPIService(session: DependencyContainer.makeDefaultSession()),
+        vimeoService: VimeoServiceProtocol = VimeoService(session: DependencyContainer.makeDefaultSession())
     ) {
         self.modelContainer = modelContainer
         self.apiService = apiService
@@ -40,6 +48,9 @@ final class DependencyContainer {
         self.starshipRepository = StarshipRepositoryImpl(api: apiService, local: starshipLocalDataSource)
 
         self.vimeoRepository = VimeoRepositoryImpl(service: vimeoService)
-        self.videoResolver = VideoResolverImpl(vimeoRepository: self.vimeoRepository, youTubeProvider: YouTubeProvider())
+        self.videoResolver = VideoResolverImpl(
+            vimeoRepository: self.vimeoRepository,
+            youTubeProvider: YouTubeProvider(session: DependencyContainer.makeDefaultSession())
+        )
     }
 }

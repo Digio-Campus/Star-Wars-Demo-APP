@@ -112,7 +112,13 @@ final class YouTubeProvider {
         guard let key = apiKeyProvider.apiKey() else { throw YouTubeAPIError.missingApiKey }
 
         var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)
-        let query = title.contains("trailer") ? title : "\(title) trailer"
+        let normalized = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let baseQuery = normalized.localizedCaseInsensitiveContains("star wars")
+            ? normalized
+            : "Star Wars \(normalized)"
+        let withTrailer = baseQuery.localizedCaseInsensitiveContains("trailer") ? baseQuery : "\(baseQuery) trailer"
+        // Prefer widely embeddable uploads.
+        let query = "\(withTrailer) official"
         components?.queryItems = [
             URLQueryItem(name: "part", value: "snippet"),
             URLQueryItem(name: "q", value: query),

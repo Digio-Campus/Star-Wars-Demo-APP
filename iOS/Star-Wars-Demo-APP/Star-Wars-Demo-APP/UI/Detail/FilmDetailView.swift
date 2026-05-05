@@ -3,6 +3,8 @@ import SwiftUI
 struct FilmDetailView: View {
     @StateObject private var viewModel: FilmDetailViewModel
 
+    @Environment(\.openURL) private var openURL
+
     @State private var scrollOffset: CGFloat = 0
 
     private static let scrollSpaceName = "film-detail-scroll"
@@ -75,8 +77,19 @@ struct FilmDetailView: View {
                                 } else {
                                     if let target = viewModel.playbackTarget {
                                         let source = target.toVideoSource()
-                                        IOSTrailerPlayerView(source: source)
-                                            .frame(height: 210)
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            IOSTrailerPlayerView(source: source)
+                                                .frame(height: 210)
+
+                                            if case .YouTube(let videoId) = source,
+                                               let url = URL(string: "https://youtu.be/\(videoId)") {
+                                                Button("Abrir en YouTube") {
+                                                    openURL(url)
+                                                }
+                                                .buttonStyle(.bordered)
+                                                .tint(StarWarsColors.primary)
+                                            }
+                                        }
                                     } else {
                                         if let message = viewModel.vimeoErrorMessage {
                                             VStack(alignment: .leading, spacing: 8) {
