@@ -10,7 +10,7 @@ final class VideoResolverImpl: VideoResolver {
         self.youTubeProvider = youTubeProvider
     }
 
-    func resolve(title: String) async -> PlaybackTarget? {
+    func resolve(title: String) async throws -> PlaybackTarget? {
         // Try Vimeo first
         do {
             if let vimeo = try await vimeoRepository.searchVimeoVideo(title: title), let url = vimeo.playbackURL {
@@ -21,14 +21,10 @@ final class VideoResolverImpl: VideoResolver {
         }
 
         // Try YouTube
-        do {
-            if let candidate = try await youTubeProvider.searchFirst(title: title) {
-                if candidate.embeddable, let embed = URL(string: "https://www.youtube.com/embed/\(candidate.contentId)?playsinline=1") {
-                    return .embedded(url: embed)
-                }
+        if let candidate = try await youTubeProvider.searchFirst(title: title) {
+            if candidate.embeddable, let embed = URL(string: "https://www.youtube.com/embed/\(candidate.contentId)?playsinline=1") {
+                return .embedded(url: embed)
             }
-        } catch {
-            // ignore
         }
 
         return nil

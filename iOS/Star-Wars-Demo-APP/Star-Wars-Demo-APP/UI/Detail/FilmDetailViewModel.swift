@@ -74,26 +74,32 @@ final class FilmDetailViewModel: ObservableObject {
         vimeoErrorMessage = nil
         defer { isLoadingVimeoVideo = false }
 
-        // Try to resolve via the VideoResolver (Vimeo -> YouTube fallback)
-        let target = await videoResolver.resolve(title: film.title)
-        if let t = target {
-            playbackTarget = t
+        do {
+            // Try to resolve via the VideoResolver (Vimeo -> YouTube fallback)
+            let target = try await videoResolver.resolve(title: film.title)
+            if let t = target {
+                playbackTarget = t
 
-            // If target is vimeo we may want to keep vimeoVideo metadata. Try to fetch.
-            if case .vimeo = t {
-                do {
-                    vimeoVideo = try await vimeoRepository.searchVimeoVideo(title: film.title)
-                } catch {
-                    // ignore; keep vimeoVideo nil
+                // If target is vimeo we may want to keep vimeoVideo metadata. Try to fetch.
+                if case .vimeo = t {
+                    do {
+                        vimeoVideo = try await vimeoRepository.searchVimeoVideo(title: film.title)
+                    } catch {
+                        // ignore; keep vimeoVideo nil
+                    }
+                } else {
+                    vimeoVideo = nil
                 }
-            } else {
-                vimeoVideo = nil
+                return
             }
-            return
-        }
 
-        // No video found
-        playbackTarget = nil
-        vimeoVideo = nil
+            // No video found
+            playbackTarget = nil
+            vimeoVideo = nil
+        } catch {
+            playbackTarget = nil
+            vimeoVideo = nil
+            vimeoErrorMessage = error.localizedDescription
+        }
     }
 }
