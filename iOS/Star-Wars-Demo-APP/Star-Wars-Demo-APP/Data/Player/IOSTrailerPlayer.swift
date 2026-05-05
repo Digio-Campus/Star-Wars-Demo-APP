@@ -94,26 +94,34 @@ extension IOSTrailerPlayer: TrailerPlayer {
                 let config = WKWebViewConfiguration()
                 config.allowsInlineMediaPlayback = true
                 config.allowsAirPlayForMediaPlayback = true
+                if #available(iOS 14.0, *) {
+                    config.defaultWebpagePreferences.allowsContentJavaScript = true
+                }
                 let wv = WKWebView(frame: self.view.bounds, configuration: config)
                 wv.navigationDelegate = self
                 wv.autoresizingMask = [.flexibleWidth, .flexibleHeight]
                 wv.scrollView.isScrollEnabled = false
                 self.view.addSubview(wv)
-                let embed = "https://www.youtube.com/embed/\(videoId)?playsinline=1&enablejsapi=1"
-                wv.loadHTMLString(self.htmlForEmbeddedPlayer(embedURL: embed), baseURL: nil)
+                // Provide a non-null origin to improve compatibility with YouTube embeds.
+                let origin = "https://www.youtube.com"
+                let embed = "https://www.youtube.com/embed/\(videoId)?playsinline=1&enablejsapi=1&origin=\(origin)"
+                wv.loadHTMLString(self.htmlForEmbeddedPlayer(embedURL: embed), baseURL: URL(string: origin))
                 self.webView = wv
 
             case .Vimeo(let videoId):
                 let config = WKWebViewConfiguration()
                 config.allowsInlineMediaPlayback = true
                 config.allowsAirPlayForMediaPlayback = true
+                if #available(iOS 14.0, *) {
+                    config.defaultWebpagePreferences.allowsContentJavaScript = true
+                }
                 let wv = WKWebView(frame: self.view.bounds, configuration: config)
                 wv.navigationDelegate = self
                 wv.autoresizingMask = [.flexibleWidth, .flexibleHeight]
                 wv.scrollView.isScrollEnabled = false
                 self.view.addSubview(wv)
                 let embed = "https://player.vimeo.com/video/\(videoId)?playsinline=1"
-                wv.loadHTMLString(self.htmlForEmbeddedPlayer(embedURL: embed), baseURL: nil)
+                wv.loadHTMLString(self.htmlForEmbeddedPlayer(embedURL: embed), baseURL: URL(string: "https://player.vimeo.com"))
                 self.webView = wv
             }
         }

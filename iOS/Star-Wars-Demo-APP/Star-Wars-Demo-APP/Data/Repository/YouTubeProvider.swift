@@ -64,6 +64,7 @@ final class YouTubeProvider {
     private let apiKeyProvider: YouTubeAPIKeyProviding
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "Star-Wars-Demo-APP", category: "YouTube")
     private let baseURL = URL(string: "https://www.googleapis.com/youtube/v3/search")!
+    private let videosURL = URL(string: "https://www.googleapis.com/youtube/v3/videos")!
 
     init(session: URLSession = .shared, apiKeyProvider: YouTubeAPIKeyProviding = BundleYouTubeAPIKeyProvider()) {
         self.session = session
@@ -83,6 +84,30 @@ final class YouTubeProvider {
         let items: [Item]
     }
 
+    private struct VideosResponse: Decodable {
+        struct Item: Decodable {
+            struct Status: Decodable {
+                let embeddable: Bool?
+            }
+            struct ContentDetails: Decodable {
+                struct RegionRestriction: Decodable {
+                    let blocked: [String]?
+                }
+                struct ContentRating: Decodable {
+                    let ytRating: String?
+                }
+                let regionRestriction: RegionRestriction?
+                let contentRating: ContentRating?
+            }
+
+            let id: String
+            let status: Status?
+            let contentDetails: ContentDetails?
+        }
+
+        let items: [Item]
+    }
+
     func searchFirst(title: String) async throws -> VideoCandidate? {
         guard let key = apiKeyProvider.apiKey() else { throw YouTubeAPIError.missingApiKey }
 
@@ -94,7 +119,7 @@ final class YouTubeProvider {
             URLQueryItem(name: "type", value: "video"),
             URLQueryItem(name: "videoEmbeddable", value: "true"),
             URLQueryItem(name: "videoSyndicated", value: "true"),
-            URLQueryItem(name: "maxResults", value: "1"),
+            URLQueryItem(name: "maxResults", value: "8"),
             URLQueryItem(name: "key", value: key)
         ]
         guard let url = components?.url else { throw YouTubeAPIError.invalidURL }
@@ -107,21 +132,67 @@ final class YouTubeProvider {
         guard (200...299).contains(http.statusCode) else { throw YouTubeAPIError.httpStatus(http.statusCode) }
 
         let dto = try JSONDecoder().decode(SearchResponse.self, from: data)
-        guard let first = dto.items.first, let videoId = first.id.videoId else { return nil }
+        let candidates: [(videoId: String, title: String, thumbnailUrl: URL?)] = dto.items.compactMap {
+            guard let videoId = $0.id.videoId else { return nil }
+            let thumbnailStr = $0.snippet.thumbnails.medium?.url ?? $0.snippet.thumbnails.default?.url
+            let thumbnailUrl = thumbnailStr.flatMap(URL.init)
+            return (videoId: videoId, title: $0.snippet.title, thumbnailUrl: thumbnailUrl)
+        }
 
-        let watchUrl = URL(string: "https://youtu.be/\(videoId)")!
-        let thumbnailStr = first.snippet.thumbnails.medium?.url ?? first.snippet.thumbnails.default?.url
-        let thumbnailUrl = thumbnailStr.flatMap(URL.init)
+        guard !candidates.isEmpty else { return nil }
 
-        logger.debug("YouTube: found video \(videoId) for query \(title)")
+        let selected = try await pickBestEmbeddableVideo(candidates: candidates, apiKey: key) ?? candidates[0]
+        let watchUrl = URL(string: "https://youtu.be/\(selected.videoId)")!
+
+        logger.debug("YouTube: found video \(selected.videoId) for query \(title)")
 
         return VideoCandidate(
             provider: "youtube",
-            contentId: videoId,
-            title: first.snippet.title,
+            contentId: selected.videoId,
+            title: selected.title,
             watchUrl: watchUrl,
-            thumbnailUrl: thumbnailUrl,
+            thumbnailUrl: selected.thumbnailUrl,
             embeddable: true
         )
+    }
+
+    private func pickBestEmbeddableVideo(
+        candidates: [(videoId: String, title: String, thumbnailUrl: URL?)],
+        apiKey: String
+    ) async throws -> (videoId: String, title: String, thumbnailUrl: URL?)? {
+        let ids = candidates.map { $0.videoId }
+
+        var components = URLComponents(url: videosURL, resolvingAgainstBaseURL: false)
+        components?.queryItems = [
+            URLQueryItem(name: "part", value: "status,contentDetails"),
+            URLQueryItem(name: "id", value: ids.joined(separator: ",")),
+            URLQueryItem(name: "key", value: apiKey)
+        ]
+        guard let url = components?.url else { throw YouTubeAPIError.invalidURL }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw YouTubeAPIError.invalidResponse }
+        guard (200...299).contains(http.statusCode) else { throw YouTubeAPIError.httpStatus(http.statusCode) }
+
+        let dto = try JSONDecoder().decode(VideosResponse.self, from: data)
+        let detailsById = Dictionary(uniqueKeysWithValues: dto.items.map { ($0.id, $0) })
+
+        for c in candidates {
+            guard let details = detailsById[c.videoId] else { continue }
+
+            // Be conservative: avoid videos that are clearly problematic for embeds.
+            if details.status?.embeddable == false { continue }
+            if details.contentDetails?.contentRating?.ytRating == "ytAgeRestricted" { continue }
+
+            // If it has a blocked list, it tends to be region-gated; skip to reduce failures.
+            if let blocked = details.contentDetails?.regionRestriction?.blocked, !blocked.isEmpty { continue }
+
+            return c
+        }
+
+        return nil
     }
 }
