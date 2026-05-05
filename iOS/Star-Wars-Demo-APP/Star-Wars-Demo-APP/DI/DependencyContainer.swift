@@ -3,7 +3,7 @@ import SwiftData
 
 @MainActor
 final class DependencyContainer {
-    static func makeDefaultSession() -> URLSession {
+    nonisolated static func makeDefaultSession() -> URLSession {
         let config = URLSessionConfiguration.default
         // Avoid indefinite-looking spinners on flaky networks.
         config.timeoutIntervalForRequest = 15
