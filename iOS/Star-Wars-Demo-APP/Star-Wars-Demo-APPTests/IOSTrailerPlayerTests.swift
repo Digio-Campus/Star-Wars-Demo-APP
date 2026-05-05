@@ -10,7 +10,7 @@ struct IOSTrailerPlayerTests {
         vc.play()
         vc.pause()
         vc.enableCasting()
-        vc.release()
+        vc.cleanup()
         #expect(true)
     }
 }

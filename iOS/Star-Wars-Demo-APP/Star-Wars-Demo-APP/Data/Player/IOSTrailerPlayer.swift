@@ -156,7 +156,7 @@ extension IOSTrailerPlayer: TrailerPlayer {
         }
     }
 
-    func release() {
+    func cleanup() {
         DispatchQueue.main.async {
             self.teardown()
         }
