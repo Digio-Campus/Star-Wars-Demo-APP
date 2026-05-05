@@ -119,7 +119,7 @@ final class YouTubeProvider {
             URLQueryItem(name: "type", value: "video"),
             URLQueryItem(name: "videoEmbeddable", value: "true"),
             URLQueryItem(name: "videoSyndicated", value: "true"),
-            URLQueryItem(name: "maxResults", value: "8"),
+            URLQueryItem(name: "maxResults", value: "15"),
             URLQueryItem(name: "key", value: key)
         ]
         guard let url = components?.url else { throw YouTubeAPIError.invalidURL }
@@ -184,7 +184,7 @@ final class YouTubeProvider {
             guard let details = detailsById[c.videoId] else { continue }
 
             // Be conservative: avoid videos that are clearly problematic for embeds.
-            if details.status?.embeddable == false { continue }
+            guard details.status?.embeddable == true else { continue }
             if details.contentDetails?.contentRating?.ytRating == "ytAgeRestricted" { continue }
 
             // If it has a blocked list, it tends to be region-gated; skip to reduce failures.
