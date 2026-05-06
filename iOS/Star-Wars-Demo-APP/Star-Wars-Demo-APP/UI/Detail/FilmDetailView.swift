@@ -75,7 +75,7 @@ struct FilmDetailView: View {
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 24)
                                 } else {
-                                    if let target = viewModel.playbackTarget {
+                                        if let target = viewModel.playbackTarget {
                                         switch target {
                                         case .external(let url):
                                             VStack(alignment: .leading, spacing: 8) {
@@ -90,7 +90,7 @@ struct FilmDetailView: View {
                                                 .tint(StarWarsColors.primary)
                                             }
 
-                                        case .direct, .embedded:
+                                        case .direct, .embedded, .vimeo:
                                             let source = target.toVideoSource()
                                             VStack(alignment: .leading, spacing: 8) {
                                                 IOSTrailerPlayerView(source: source)
