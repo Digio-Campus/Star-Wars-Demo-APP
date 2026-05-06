@@ -19,6 +19,10 @@ extension PlaybackTarget {
                 return .YouTube(videoId: v)
             }
             return .Direct(url: url)
+        case .direct(let url):
+            return .Direct(url: url)
+        case .external(let url):
+            return .Direct(url: url)
         }
     }
 }
