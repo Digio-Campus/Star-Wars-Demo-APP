@@ -19,7 +19,7 @@ struct Star_Wars_Demo_APPTests {
           "starships": [],
           "vehicles": ["v1", "v2", "v3"],
           "species": ["s"],
-          "url": "https://swapi.info/api/films/1"
+          "url": "https://swapi.dev/api/films/1/"
         }
         """#
 
@@ -124,7 +124,7 @@ struct Star_Wars_Demo_APPTests {
           "starships": [],
           "vehicles": [],
           "species": [],
-          "url": "https://swapi.info/api/films/1"
+          "url": "https://swapi.dev/api/films/1/"
         }
         """#.utf8))
 

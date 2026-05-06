@@ -92,6 +92,7 @@ final class YouTubeProvider {
             struct ContentDetails: Decodable {
                 struct RegionRestriction: Decodable {
                     let blocked: [String]?
+                    let allowed: [String]?
                 }
                 struct ContentRating: Decodable {
                     let ytRating: String?
@@ -147,18 +148,31 @@ final class YouTubeProvider {
 
         guard !candidates.isEmpty else { return nil }
 
-        let selected = try await pickBestEmbeddableVideo(candidates: candidates, apiKey: key) ?? candidates[0]
-        let watchUrl = URL(string: "https://youtu.be/\(selected.videoId)")!
+        if let selected = try await pickBestEmbeddableVideo(candidates: candidates, apiKey: key) {
+            let watchUrl = URL(string: "https://youtu.be/\(selected.videoId)")!
+            logger.debug("YouTube: selected embeddable video \(selected.videoId) for query \(title)")
+            return VideoCandidate(
+                provider: "youtube",
+                contentId: selected.videoId,
+                title: selected.title,
+                watchUrl: watchUrl,
+                thumbnailUrl: selected.thumbnailUrl,
+                embeddable: true
+            )
+        }
 
-        logger.debug("YouTube: found video \(selected.videoId) for query \(title)")
+        // Fallback: we found results, but none are safe to embed (age/region/embeddable flags).
+        let fallback = candidates[0]
+        let watchUrl = URL(string: "https://youtu.be/\(fallback.videoId)")!
+        logger.debug("YouTube: no embeddable candidates; falling back to external \(fallback.videoId) for query \(title)")
 
         return VideoCandidate(
             provider: "youtube",
-            contentId: selected.videoId,
-            title: selected.title,
+            contentId: fallback.videoId,
+            title: fallback.title,
             watchUrl: watchUrl,
-            thumbnailUrl: selected.thumbnailUrl,
-            embeddable: true
+            thumbnailUrl: fallback.thumbnailUrl,
+            embeddable: false
         )
     }
 
@@ -186,6 +200,13 @@ final class YouTubeProvider {
         let dto = try JSONDecoder().decode(VideosResponse.self, from: data)
         let detailsById = Dictionary(uniqueKeysWithValues: dto.items.map { ($0.id, $0) })
 
+        let deviceRegion: String? = {
+            if #available(iOS 16.0, *) {
+                return Locale.current.region?.identifier
+            }
+            return Locale.current.regionCode
+        }()
+
         for c in candidates {
             guard let details = detailsById[c.videoId] else { continue }
 
@@ -193,8 +214,14 @@ final class YouTubeProvider {
             guard details.status?.embeddable == true else { continue }
             if details.contentDetails?.contentRating?.ytRating == "ytAgeRestricted" { continue }
 
-            // If it has a blocked list, it tends to be region-gated; skip to reduce failures.
-            if let blocked = details.contentDetails?.regionRestriction?.blocked, !blocked.isEmpty { continue }
+            if let rr = details.contentDetails?.regionRestriction {
+                if let blocked = rr.blocked, let r = deviceRegion, blocked.contains(r) {
+                    continue
+                }
+                if let allowed = rr.allowed, let r = deviceRegion, !allowed.contains(r) {
+                    continue
+                }
+            }
 
             return c
         }

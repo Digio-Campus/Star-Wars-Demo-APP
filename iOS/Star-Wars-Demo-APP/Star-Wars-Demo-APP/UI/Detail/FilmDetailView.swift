@@ -76,18 +76,34 @@ struct FilmDetailView: View {
                                         .padding(.vertical, 24)
                                 } else {
                                     if let target = viewModel.playbackTarget {
-                                        let source = target.toVideoSource()
-                                        VStack(alignment: .leading, spacing: 8) {
-                                            IOSTrailerPlayerView(source: source)
-                                                .frame(height: 210)
+                                        switch target {
+                                        case .external(let url):
+                                            VStack(alignment: .leading, spacing: 8) {
+                                                Text("Este vídeo no se puede reproducir embebido.")
+                                                    .font(.footnote)
+                                                    .foregroundStyle(.secondary)
 
-                                            if case .YouTube(let videoId) = source,
-                                               let url = URL(string: "https://youtu.be/\(videoId)") {
                                                 Button("Abrir en YouTube") {
                                                     openURL(url)
                                                 }
                                                 .buttonStyle(.bordered)
                                                 .tint(StarWarsColors.primary)
+                                            }
+
+                                        case .direct, .embedded:
+                                            let source = target.toVideoSource()
+                                            VStack(alignment: .leading, spacing: 8) {
+                                                IOSTrailerPlayerView(source: source)
+                                                    .frame(height: 210)
+
+                                                if case .YouTube(let videoId) = source,
+                                                   let url = URL(string: "https://youtu.be/\(videoId)") {
+                                                    Button("Abrir en YouTube") {
+                                                        openURL(url)
+                                                    }
+                                                    .buttonStyle(.bordered)
+                                                    .tint(StarWarsColors.primary)
+                                                }
                                             }
                                         }
                                     } else {

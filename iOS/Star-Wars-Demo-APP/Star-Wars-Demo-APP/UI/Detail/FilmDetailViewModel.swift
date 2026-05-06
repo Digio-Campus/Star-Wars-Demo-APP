@@ -75,13 +75,13 @@ final class FilmDetailViewModel: ObservableObject {
         defer { isLoadingVimeoVideo = false }
 
         do {
-            // Try to resolve via the VideoResolver (Vimeo -> YouTube fallback)
+            // Resolve via the VideoResolver (YouTube -> Vimeo -> external fallback)
             let target = try await videoResolver.resolve(title: film.title)
             if let t = target {
                 playbackTarget = t
 
-                // If target is vimeo we may want to keep vimeoVideo metadata. Try to fetch.
-                if case .vimeo = t {
+                // Best-effort Vimeo metadata fetch when we end up with a direct stream.
+                if case .direct = t {
                     do {
                         vimeoVideo = try await vimeoRepository.searchVimeoVideo(title: film.title)
                     } catch {

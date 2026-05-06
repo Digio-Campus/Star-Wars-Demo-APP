@@ -23,22 +23,29 @@ final class IOSTrailerPlayer: UIViewController {
     private func teardown() {
         if let controller = avPlayerController {
             controller.player?.pause()
+            controller.player?.replaceCurrentItem(with: nil)
             controller.willMove(toParent: nil)
             controller.view.removeFromSuperview()
             controller.removeFromParent()
             avPlayerController = nil
             avPlayer = nil
         }
+
         if let wv = webView {
+            // Stop any ongoing playback/audio.
+            postMessage(play: false)
             wv.stopLoading()
             wv.navigationDelegate = nil
+            wv.loadHTMLString("", baseURL: nil)
             wv.removeFromSuperview()
             webView = nil
         }
+
         if let rp = routePicker {
             rp.removeFromSuperview()
             routePicker = nil
         }
+
         currentSource = nil
     }
 
@@ -94,6 +101,9 @@ extension IOSTrailerPlayer: TrailerPlayer {
                 let config = WKWebViewConfiguration()
                 config.allowsInlineMediaPlayback = true
                 config.allowsAirPlayForMediaPlayback = true
+                if #available(iOS 10.0, *) {
+                    config.mediaTypesRequiringUserActionForPlayback = []
+                }
                 if #available(iOS 14.0, *) {
                     config.defaultWebpagePreferences.allowsContentJavaScript = true
                 }
@@ -112,6 +122,9 @@ extension IOSTrailerPlayer: TrailerPlayer {
                 let config = WKWebViewConfiguration()
                 config.allowsInlineMediaPlayback = true
                 config.allowsAirPlayForMediaPlayback = true
+                if #available(iOS 10.0, *) {
+                    config.mediaTypesRequiringUserActionForPlayback = []
+                }
                 if #available(iOS 14.0, *) {
                     config.defaultWebpagePreferences.allowsContentJavaScript = true
                 }

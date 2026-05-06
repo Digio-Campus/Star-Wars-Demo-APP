@@ -30,7 +30,7 @@ struct StarshipDTO: Decodable {
 
 extension StarshipDTO {
     func toDomain() -> Starship {
-        let id = url.split(separator: "/").last.flatMap { Int($0) } ?? 0
+        let id = url.split(separator: "/").last(where: { !$0.isEmpty }).flatMap { Int($0) } ?? 0
         return Starship(
             id: id,
             name: name,
