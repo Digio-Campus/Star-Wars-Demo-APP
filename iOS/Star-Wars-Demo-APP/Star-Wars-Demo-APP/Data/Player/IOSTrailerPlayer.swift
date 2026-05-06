@@ -3,7 +3,7 @@ import UIKit
 import AVKit
 import WebKit
 
-final class IOSTrailerPlayer: UIViewController {
+final class IOSTrailerPlayer: UIViewController, TrailerPlayer, WKNavigationDelegate {
 
     private var avPlayer: AVPlayer?
     private var avPlayerController: AVPlayerViewController?
