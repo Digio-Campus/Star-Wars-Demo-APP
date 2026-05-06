@@ -21,7 +21,7 @@ fun YouTubeWebPlayer(
     modifier: Modifier = Modifier,
 ) {
     val embedHtml =
-        "<html><body style=\"margin:0;padding:0;\"><iframe width=\"100%\" height=\"100%\" src=\"https://www.youtube.com/embed/$videoId?rel=0&modestbranding=1&autoplay=1\" frameborder=\"0\" allow=\"autoplay; encrypted-media\" allowfullscreen></iframe></body></html>"
+        "<html><head><meta name=\"viewport\" content=\"initial-scale=1.0, width=device-width\" /></head><body style=\"margin:0;padding:0;\"><iframe width=\"100%\" height=\"100%\" src=\"https://www.youtube.com/embed/$videoId?rel=0&modestbranding=1&autoplay=1&playsinline=1&enablejsapi=1\" frameborder=\"0\" allow=\"accelerometer; autoplay; encrypted-media; picture-in-picture; clipboard-write\" allowfullscreen></iframe></body></html>"
 
     val holder = remember { WebViewHolder() }
 
@@ -51,13 +51,18 @@ fun YouTubeWebPlayer(
         factory = { ctx ->
             WebView(ctx).apply {
                 settings.javaScriptEnabled = true
+                settings.domStorageEnabled = true
+                settings.mediaPlaybackRequiresUserGesture = false
+                settings.allowContentAccess = true
+                settings.allowFileAccess = true
                 webViewClient = WebViewClient()
 
                 holder.webView = this
                 holder.lastVideoId = videoId
 
                 AppLog.d(TAG, "Created WebView@${hashCode()} videoId=$videoId")
-                loadDataWithBaseURL(null, embedHtml, "text/html", "utf-8", null)
+                // Use youtube.com as base URL to provide an origin for embed compatibility
+                loadDataWithBaseURL("https://www.youtube.com", embedHtml, "text/html", "utf-8", null)
             }
         },
         update = { view ->

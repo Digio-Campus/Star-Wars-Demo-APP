@@ -75,11 +75,14 @@ final class IOSTrailerPlayer: UIViewController {
     }
 }
 
-extension IOSTrailerPlayer: WKNavigationDelegate {}
-
-extension IOSTrailerPlayer: TrailerPlayer {
-    func load(source: VideoSource) {
-        DispatchQueue.main.async {
+                    <head>
+                        <meta name=\"viewport\" content=\"initial-scale=1.0, width=device-width\" />
+                    </head>
+                    <body style=\"margin:0;background:#000;\">
+                        <iframe id=\"player\" width=\"100%\" height=\"100%\" src=\"
+\(embedURL)\" frameborder=\"0\"
+                            allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen playsinline referrerpolicy=\"no-referrer\"></iframe>
+                    </body>
             self.teardown()
             self.currentSource = source
 
