@@ -7,5 +7,6 @@ data class VideoCandidate(
     val id: String,
     val provider: String,
     val embeddable: Boolean = true,
-    val watchUrl: String? = null
+    val watchUrl: String? = null,
+    val streamUrl: String? = null,
 )

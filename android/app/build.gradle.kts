@@ -109,6 +109,10 @@ dependencies {
     // Media (Media3 / ExoPlayer)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.cast)
+
+    // Chromecast (Cast SDK)
+    implementation(libs.google.play.services.cast.framework)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)

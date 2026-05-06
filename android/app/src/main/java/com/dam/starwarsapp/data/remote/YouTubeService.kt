@@ -1,6 +1,7 @@
 package com.dam.starwarsapp.data.remote
 
 import com.dam.starwarsapp.data.remote.dto.youtube.YouTubeSearchResponseDto
+import com.dam.starwarsapp.data.remote.dto.youtube.YouTubeVideosResponseDto
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -12,6 +13,14 @@ interface YouTubeService {
         @Query("type") type: String,
         @Query("maxResults") maxResults: Int,
         @Query("videoEmbeddable") videoEmbeddable: String,
+        @Query("videoSyndicated") videoSyndicated: String,
         @Query("key") apiKey: String,
     ): YouTubeSearchResponseDto
+
+    @GET("videos")
+    suspend fun videos(
+        @Query("part") part: String,
+        @Query("id") id: String,
+        @Query("key") apiKey: String,
+    ): YouTubeVideosResponseDto
 }

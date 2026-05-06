@@ -1,36 +1,30 @@
 package com.dam.starwarsapp.ui.screens.detail
 
-import com.dam.starwarsapp.util.AppLog
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dam.starwarsapp.domain.model.Film
-import com.dam.starwarsapp.domain.model.VimeoVideo
 import com.dam.starwarsapp.domain.repository.FilmRepository
-import com.dam.starwarsapp.domain.repository.VimeoRepository
 import com.dam.starwarsapp.domain.video.PlaybackTarget
 import com.dam.starwarsapp.domain.video.VideoResolver
 import com.dam.starwarsapp.ui.navigation.Destinations
+import com.dam.starwarsapp.util.AppLog
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
 import javax.inject.Inject
 
 @HiltViewModel
 class FilmDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     repository: FilmRepository,
-    private val vimeoRepository: VimeoRepository,
     private val videoResolver: VideoResolver,
 ) : ViewModel() {
 
@@ -41,19 +35,14 @@ class FilmDetailViewModel @Inject constructor(
         .map { film -> FilmDetailUiState(film = film) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FilmDetailUiState())
 
-    private val _vimeoVideo = MutableStateFlow<VimeoVideo?>(null)
-    val vimeoVideo: StateFlow<VimeoVideo?> = _vimeoVideo.asStateFlow()
-
-    private val _isVimeoLoading = MutableStateFlow(false)
-    val isVimeoLoading: StateFlow<Boolean> = _isVimeoLoading.asStateFlow()
-
-    private val _vimeoErrorMessage = MutableStateFlow<String?>(null)
-    val vimeoErrorMessage: StateFlow<String?> = _vimeoErrorMessage.asStateFlow()
-
     private val _playbackTarget = MutableStateFlow<PlaybackTarget?>(null)
     val playbackTarget: StateFlow<PlaybackTarget?> = _playbackTarget.asStateFlow()
 
-    private var vimeoJob: Job? = null
+    private val _isVideoLoading = MutableStateFlow(false)
+    val isVideoLoading: StateFlow<Boolean> = _isVideoLoading.asStateFlow()
+
+    private val _videoErrorMessage = MutableStateFlow<String?>(null)
+    val videoErrorMessage: StateFlow<String?> = _videoErrorMessage.asStateFlow()
 
     init {
         AppLog.d(TAG, "FilmDetailViewModel init (filmId=$filmId)")
@@ -64,79 +53,34 @@ class FilmDetailViewModel @Inject constructor(
                 .collectLatest { title ->
                     AppLog.d(TAG, "Film title observed: \"$title\"")
                     if (title.isBlank()) {
-                        AppLog.w(TAG, "Blank film title -> clearing Vimeo state")
-                        _vimeoVideo.value = null
-                        _isVimeoLoading.value = false
                         _playbackTarget.value = null
+                        _isVideoLoading.value = false
+                        _videoErrorMessage.value = null
                     } else {
-                        loadVimeoVideo(title)
                         resolveVideo(title)
                     }
                 }
         }
     }
 
-    fun loadVimeoVideo(title: String) {
-        AppLog.d(TAG, "loadVimeoVideo(title=\"$title\")")
-
-        vimeoJob?.let { prev ->
-            AppLog.d(TAG, "Cancelling previous vimeoJob (active=${prev.isActive}, cancelled=${prev.isCancelled})")
-            prev.cancel()
-        }
-
-        vimeoJob = viewModelScope.launch {
-            _isVimeoLoading.value = true
-            _vimeoErrorMessage.value = null
-
-            val result = vimeoRepository.safeSearch(title)
-            AppLog.d(TAG, "Vimeo search completed. uri=${result?.uri ?: "<null>"} playbackUrl=${result?.playbackUrl ?: "<null>"}")
-            _vimeoVideo.value = result
-            _isVimeoLoading.value = false
-        }.also { job ->
-            job.invokeOnCompletion { cause ->
-                AppLog.d(
-                    TAG,
-                    "vimeoJob completed (cancelled=${job.isCancelled}) cause=${cause?.javaClass?.simpleName ?: "<none>"}:${cause?.message ?: ""}",
-                )
-            }
-        }
-    }
-
     private fun resolveVideo(title: String) {
         viewModelScope.launch {
+            _isVideoLoading.value = true
+            _videoErrorMessage.value = null
             try {
                 val res = videoResolver.resolve(title)
                 _playbackTarget.value = res.getOrNull()
+                if (res.isFailure) {
+                    _videoErrorMessage.value = res.exceptionOrNull()?.message
+                }
             } catch (e: Exception) {
                 AppLog.w(TAG, "Video resolution failed: ${e.message}", e)
                 _playbackTarget.value = null
+                _videoErrorMessage.value = e.message ?: "Video resolution failed"
+            } finally {
+                _isVideoLoading.value = false
             }
         }
-    }
-
-    private suspend fun VimeoRepository.safeSearch(title: String): VimeoVideo? {
-        return try {
-            searchVimeoVideo(title).firstOrNull()
-        } catch (e: IllegalStateException) {
-            AppLog.w(TAG, "Vimeo config error: ${e.message}")
-            _vimeoErrorMessage.value = e.message
-            null
-        } catch (e: HttpException) {
-            val message = "Vimeo request failed (HTTP ${e.code()})"
-            AppLog.w(TAG, message, e)
-            _vimeoErrorMessage.value = message
-            null
-        } catch (e: Exception) {
-            AppLog.e(TAG, "Vimeo search failed", e)
-            _vimeoErrorMessage.value = e.message ?: "Vimeo request failed"
-            null
-        }
-    }
-
-    override fun onCleared() {
-        AppLog.d(TAG, "onCleared (filmId=$filmId) cancelling vimeoJob=${vimeoJob != null}")
-        vimeoJob?.cancel()
-        super.onCleared()
     }
 
     private companion object {

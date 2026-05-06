@@ -25,3 +25,34 @@ data class YouTubeThumbnailsDto(
 data class YouTubeThumbnailDto(
     val url: String? = null
 )
+
+// videos.list DTOs
+
+data class YouTubeVideosResponseDto(
+    val items: List<YouTubeVideoItemDto> = emptyList(),
+)
+
+data class YouTubeVideoItemDto(
+    val id: String? = null,
+    val status: YouTubeVideoStatusDto? = null,
+    val contentDetails: YouTubeVideoContentDetailsDto? = null,
+)
+
+data class YouTubeVideoStatusDto(
+    val embeddable: Boolean? = null,
+    val privacyStatus: String? = null,
+)
+
+data class YouTubeVideoContentDetailsDto(
+    val contentRating: YouTubeContentRatingDto? = null,
+    val regionRestriction: YouTubeRegionRestrictionDto? = null,
+)
+
+data class YouTubeContentRatingDto(
+    val ytRating: String? = null,
+)
+
+data class YouTubeRegionRestrictionDto(
+    val blocked: List<String>? = null,
+    val allowed: List<String>? = null,
+)

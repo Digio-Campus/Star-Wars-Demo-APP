@@ -1,5 +1,6 @@
 package com.dam.starwarsapp.ui.screens.detail
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
@@ -55,10 +56,9 @@ fun FilmDetailScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val film = state.film
-    val vimeoVideo by viewModel.vimeoVideo.collectAsState()
-    val isVimeoLoading by viewModel.isVimeoLoading.collectAsState()
-    val vimeoErrorMessage by viewModel.vimeoErrorMessage.collectAsState()
     val playbackTarget by viewModel.playbackTarget.collectAsState()
+    val isVideoLoading by viewModel.isVideoLoading.collectAsState()
+    val videoErrorMessage by viewModel.videoErrorMessage.collectAsState()
 
     ImmersiveDetailScaffold(
         title = film?.title ?: "Película",
@@ -125,21 +125,53 @@ fun FilmDetailScreen(
                     title = "Video",
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    // Prefer resolved playback target (YouTube/Vimeo) if available
                     val context = LocalContext.current
                     when (val target = playbackTarget) {
                         is PlaybackTarget.Embedded -> {
                             when (target.provider.lowercase()) {
                                 "youtube" -> {
-                                    AndroidTrailerPlayerComposableForYouTube(videoId = target.videoId, modifier = Modifier.height(210.dp))
-                                }
-                                "vimeo" -> {
-                                    VimeoPlayerScreen(vimeoVideo = vimeoVideo)
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        AndroidTrailerPlayerComposableForYouTube(
+                                            videoId = target.videoId,
+                                            modifier = Modifier.height(210.dp),
+                                        )
+
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            OutlinedButton(onClick = {
+                                                context.startActivity(
+                                                    Intent(
+                                                        Intent.ACTION_VIEW,
+                                                        Uri.parse("https://youtu.be/${target.videoId}"),
+                                                    ),
+                                                )
+                                            }) {
+                                                Text("Abrir en YouTube")
+                                            }
+
+                                            OutlinedButton(onClick = {
+                                                openYouTubeApp(context, target.videoId)
+                                            }) {
+                                                Text("Cast")
+                                            }
+                                        }
+                                    }
                                 }
                                 else -> {
-                                    VimeoPlayerScreen(vimeoVideo = vimeoVideo)
+                                    OutlinedButton(onClick = {
+                                        context.startActivity(
+                                            Intent(
+                                                Intent.ACTION_VIEW,
+                                                Uri.parse("https://youtu.be/${target.videoId}"),
+                                            ),
+                                        )
+                                    }) {
+                                        Text("Abrir video")
+                                    }
                                 }
                             }
+                        }
+                        is PlaybackTarget.DirectStream -> {
+                            DirectStreamPlayerWithCast(url = target.url)
                         }
                         is PlaybackTarget.External -> {
                             OutlinedButton(onClick = {
@@ -148,11 +180,26 @@ fun FilmDetailScreen(
                                 Text("Abrir video")
                             }
                         }
-                        else -> {
-                            if (isVimeoLoading) {
+                        null -> {
+                            if (isVideoLoading) {
                                 CircularProgressIndicator()
                             } else {
-                                VimeoPlayerScreen(vimeoVideo = vimeoVideo)
+                                val msg = videoErrorMessage
+                                if (!msg.isNullOrBlank()) {
+                                    Text(
+                                        text = msg,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(top = 8.dp),
+                                    )
+                                } else {
+                                    Text(
+                                        text = "Vídeo no disponible para esta película.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(top = 8.dp),
+                                    )
+                                }
                             }
                         }
                     }
@@ -209,15 +256,48 @@ fun FilmDetailScreen(
                     is PlaybackTarget.Embedded -> {
                         when (target.provider.lowercase()) {
                             "youtube" -> {
-                                AndroidTrailerPlayerComposableForYouTube(videoId = target.videoId, modifier = Modifier.height(210.dp))
-                            }
-                            "vimeo" -> {
-                                VimeoPlayerScreen(vimeoVideo = vimeoVideo)
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    AndroidTrailerPlayerComposableForYouTube(
+                                        videoId = target.videoId,
+                                        modifier = Modifier.height(210.dp),
+                                    )
+
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        OutlinedButton(onClick = {
+                                            context.startActivity(
+                                                Intent(
+                                                    Intent.ACTION_VIEW,
+                                                    Uri.parse("https://youtu.be/${target.videoId}"),
+                                                ),
+                                            )
+                                        }) {
+                                            Text("Abrir en YouTube")
+                                        }
+
+                                        OutlinedButton(onClick = {
+                                            openYouTubeApp(context, target.videoId)
+                                        }) {
+                                            Text("Cast")
+                                        }
+                                    }
+                                }
                             }
                             else -> {
-                                VimeoPlayerScreen(vimeoVideo = vimeoVideo)
+                                OutlinedButton(onClick = {
+                                    context.startActivity(
+                                        Intent(
+                                            Intent.ACTION_VIEW,
+                                            Uri.parse("https://youtu.be/${target.videoId}"),
+                                        ),
+                                    )
+                                }) {
+                                    Text("Abrir video")
+                                }
                             }
                         }
+                    }
+                    is PlaybackTarget.DirectStream -> {
+                        DirectStreamPlayerWithCast(url = target.url)
                     }
                     is PlaybackTarget.External -> {
                         OutlinedButton(onClick = {
@@ -226,30 +306,26 @@ fun FilmDetailScreen(
                             Text("Abrir video")
                         }
                     }
-                    else -> {
-                        if (isVimeoLoading) {
+                    null -> {
+                        if (isVideoLoading) {
                             CircularProgressIndicator()
                         } else {
-                            VimeoPlayerScreen(vimeoVideo = vimeoVideo)
-
-                                if (vimeoVideo?.playbackUrl.isNullOrBlank()) {
-                                    val message = vimeoErrorMessage
-                                    if (!message.isNullOrBlank()) {
-                                        Text(
-                                            text = message,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.padding(top = 8.dp),
-                                        )
-
-                                        OutlinedButton(
-                                            onClick = { film?.title?.let(viewModel::loadVimeoVideo) },
-                                            modifier = Modifier.padding(top = 8.dp),
-                                        ) {
-                                            Text("Retry")
-                                        }
-                                    }
-                                }
+                            val msg = videoErrorMessage
+                            if (!msg.isNullOrBlank()) {
+                                Text(
+                                    text = msg,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 8.dp),
+                                )
+                            } else {
+                                Text(
+                                    text = "Vídeo no disponible para esta película.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 8.dp),
+                                )
+                            }
                         }
                     }
                 }
@@ -259,5 +335,16 @@ fun FilmDetailScreen(
                 DetailFieldsList(fields = meta)
             }
         }
+    }
+}
+
+private fun openYouTubeApp(context: android.content.Context, videoId: String) {
+    val appIntent = Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:$videoId"))
+    val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://youtu.be/$videoId"))
+
+    try {
+        context.startActivity(appIntent)
+    } catch (_: ActivityNotFoundException) {
+        context.startActivity(webIntent)
     }
 }

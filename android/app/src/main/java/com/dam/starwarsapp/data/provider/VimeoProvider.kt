@@ -17,8 +17,15 @@ class VimeoProvider @Inject constructor(
             if (v == null) return Result.success(null)
             val videoId = v.uri.split('/').lastOrNull() ?: return Result.success(null)
             val watchUrl = if (v.link.isNotBlank()) v.link else "https://vimeo.com/$videoId"
-            val embeddable = !v.playbackUrl.isNullOrBlank()
-            val candidate = VideoCandidate(id = videoId, provider = "vimeo", embeddable = embeddable, watchUrl = watchUrl)
+            val streamUrl = v.playbackUrl
+            val embeddable = !streamUrl.isNullOrBlank()
+            val candidate = VideoCandidate(
+                id = videoId,
+                provider = "vimeo",
+                embeddable = embeddable,
+                watchUrl = watchUrl,
+                streamUrl = streamUrl,
+            )
             Result.success(candidate)
         } catch (e: Exception) {
             Result.failure(e)

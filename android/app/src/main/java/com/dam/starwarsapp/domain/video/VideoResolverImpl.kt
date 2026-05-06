@@ -10,6 +10,8 @@ class VideoResolverImpl @Inject constructor(
 
     override suspend fun resolve(title: String): Result<PlaybackTarget?> {
         try {
+            var bestExternalUrl: String? = null
+
             for (provider in providers) {
                 AppLog.d(TAG, "Trying provider=${provider.javaClass.simpleName} for title=\"$title\"")
 
@@ -36,15 +38,31 @@ class VideoResolverImpl @Inject constructor(
                     "Provider ${provider.javaClass.simpleName} returned candidate=${candidate.id} embeddable=${candidate.embeddable} provider=${candidate.provider}",
                 )
 
-                return if (candidate.embeddable) {
-                    Result.success(PlaybackTarget.Embedded(candidate.id, candidate.provider))
-                } else {
-                    Result.success(
-                        PlaybackTarget.External(
-                            candidate.watchUrl ?: "https://www.youtube.com/watch?v=${candidate.id}",
-                        ),
-                    )
+                val streamUrl = candidate.streamUrl?.trim().orEmpty()
+                if (streamUrl.isNotBlank()) {
+                    return Result.success(PlaybackTarget.DirectStream(streamUrl))
                 }
+
+                if (candidate.embeddable) {
+                    return Result.success(PlaybackTarget.Embedded(candidate.id, candidate.provider))
+                }
+
+                val fallbackExternal = candidate.watchUrl
+                    ?: when (candidate.provider.lowercase()) {
+                        "youtube" -> "https://www.youtube.com/watch?v=${candidate.id}"
+                        "vimeo" -> "https://vimeo.com/${candidate.id}"
+                        else -> null
+                    }
+
+                if (!fallbackExternal.isNullOrBlank()) {
+                    bestExternalUrl = fallbackExternal
+                }
+
+                // Not embeddable -> try next provider (e.g. Vimeo) before falling back to external.
+            }
+
+            if (!bestExternalUrl.isNullOrBlank()) {
+                return Result.success(PlaybackTarget.External(bestExternalUrl!!))
             }
 
             AppLog.d(TAG, "No provider returned a candidate for title=\"$title\"")
