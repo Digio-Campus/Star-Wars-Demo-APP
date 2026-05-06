@@ -12,11 +12,11 @@ struct VideoSourceTests {
             if case .YouTube(let id) = vs1 { return id == "abc123" } else { return false }
         }())
 
-        let directURL = URL(string: "https://example.com/video.mp4")!
-        let pt2 = PlaybackTarget.direct(url: directURL)
+        let vimeoURL = URL(string: "https://player.vimeo.com/video/987654")!
+        let pt2 = PlaybackTarget.vimeo(url: vimeoURL)
         let vs2 = pt2.toVideoSource()
         #expect({
-            if case .Direct(let url) = vs2 { return url == directURL } else { return false }
+            if case .Vimeo(let id) = vs2 { return id == "987654" } else { return false }
         }())
     }
 }

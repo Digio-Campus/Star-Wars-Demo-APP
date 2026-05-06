@@ -24,7 +24,7 @@ struct FilmDTO: Decodable {
 
 extension FilmDTO {
     func toDomain() -> Film {
-        let id = url.split(separator: "/").last(where: { !$0.isEmpty }).flatMap { Int($0) } ?? 0
+        let id = url.split(separator: "/").last.flatMap { Int($0) } ?? 0
         return Film(
             id: id,
             title: title,

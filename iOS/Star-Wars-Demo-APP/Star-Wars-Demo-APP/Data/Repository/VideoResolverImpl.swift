@@ -11,34 +11,20 @@ final class VideoResolverImpl: VideoResolver {
     }
 
     func resolve(title: String) async throws -> PlaybackTarget? {
-        var externalFallback: URL?
-
-        // Prefer YouTube first; if it isn't embeddable, try Vimeo and only then fall back to opening YouTube externally.
+        // Try Vimeo first
         do {
-            if let candidate = try await youTubeProvider.searchFirst(title: title) {
-                externalFallback = candidate.watchUrl
-
-                if candidate.embeddable,
-                   let embed = URL(string: "https://www.youtube.com/embed/\(candidate.contentId)?playsinline=1&enablejsapi=1") {
-                    return .embedded(url: embed)
-                }
+            if let vimeo = try await vimeoRepository.searchVimeoVideo(title: title), let url = vimeo.playbackURL {
+                return .vimeo(url: url)
             }
         } catch {
-            // Missing key / quota / networking errors: fall back to Vimeo.
+            // ignore and fallback to YouTube
         }
 
-        // Vimeo direct stream (preferred for in-app playback)
-        do {
-            if let vimeo = try await vimeoRepository.searchVimeoVideo(title: title),
-               let url = vimeo.playbackURL {
-                return .direct(url: url)
+        // Try YouTube
+        if let candidate = try await youTubeProvider.searchFirst(title: title) {
+            if candidate.embeddable, let embed = URL(string: "https://www.youtube.com/embed/\(candidate.contentId)?playsinline=1") {
+                return .embedded(url: embed)
             }
-        } catch {
-            // ignore and fall back
-        }
-
-        if let url = externalFallback {
-            return .external(url: url)
         }
 
         return nil
