@@ -63,31 +63,28 @@ final class IOSTrailerPlayer: UIViewController {
     }
 
     private func htmlForEmbeddedPlayer(embedURL: String) -> String {
-        """
-        <!doctype html>
-        <html>
-          <body style=\"margin:0;background:#000;\">
-            <iframe id=\"player\" width=\"100%\" height=\"100%\" src=\"\(embedURL)\" frameborder=\"0\"
-              allow=\"autoplay; encrypted-media; picture-in-picture\" allowfullscreen></iframe>
-          </body>
-        </html>
-        """
-    }
-}
-
+                return """
+                <!doctype html>
+                <html>
                     <head>
-                        <meta name=\"viewport\" content=\"initial-scale=1.0, width=device-width\" />
+                        <meta name="viewport" content="initial-scale=1.0, width=device-width" />
                     </head>
-                    <body style=\"margin:0;background:#000;\">
-                        <iframe id=\"player\" width=\"100%\" height=\"100%\" src=\"
-\(embedURL)\" frameborder=\"0\"
-                            allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen playsinline referrerpolicy=\"no-referrer\"></iframe>
+                    <body style="margin:0;background:#000;">
+                        <iframe id="player" width="100%" height="100%" src="\(embedURL)" frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen playsinline referrerpolicy="no-referrer"></iframe>
                     </body>
-            self.teardown()
-            self.currentSource = source
+                </html>
+                """
+        }
 
-            switch source {
-            case .Direct(let url):
+            @MainActor
+            func load(source: VideoSource) {
+                DispatchQueue.main.async {
+                    self.teardown()
+                    self.currentSource = source
+
+                    switch source {
+                    case .Direct(let url):
                 let player = AVPlayer(url: url)
                 let controller = AVPlayerViewController()
                 controller.player = player
