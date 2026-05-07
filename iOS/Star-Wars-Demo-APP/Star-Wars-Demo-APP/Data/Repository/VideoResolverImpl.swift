@@ -23,7 +23,7 @@ final class VideoResolverImpl: VideoResolver {
         // Try YouTube
         if let candidate = try await youTubeProvider.searchFirst(title: title) {
             if candidate.embeddable, let embed = URL(string: "https://www.youtube.com/embed/\(candidate.contentId)?playsinline=1") {
-                return .embedded(url: embed)
+                return .embedded(url: embed, thumbnailUrl: candidate.thumbnailUrl)
             }
         }
 

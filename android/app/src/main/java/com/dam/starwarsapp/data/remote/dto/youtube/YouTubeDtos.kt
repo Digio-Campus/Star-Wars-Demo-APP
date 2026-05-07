@@ -19,7 +19,9 @@ data class YouTubeSnippetDto(
 )
 
 data class YouTubeThumbnailsDto(
-    val default: YouTubeThumbnailDto? = null
+    val default: YouTubeThumbnailDto? = null,
+    val medium: YouTubeThumbnailDto? = null,
+    val high: YouTubeThumbnailDto? = null,
 )
 
 data class YouTubeThumbnailDto(

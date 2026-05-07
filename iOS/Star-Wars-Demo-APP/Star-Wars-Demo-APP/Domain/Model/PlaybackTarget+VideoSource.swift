@@ -9,14 +9,14 @@ extension PlaybackTarget {
                 return .Vimeo(videoId: last)
             }
             return .Direct(url: url)
-        case .embedded(let url):
+        case .embedded(let url, let thumbnailUrl):
             let comps = url.pathComponents
             if let embedIndex = comps.firstIndex(of: "embed"), embedIndex + 1 < comps.count {
                 let id = comps[embedIndex + 1]
-                return .YouTube(videoId: id)
+                return .YouTube(videoId: id, thumbnailUrl: thumbnailUrl)
             }
             if let v = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "v" })?.value {
-                return .YouTube(videoId: v)
+                return .YouTube(videoId: v, thumbnailUrl: thumbnailUrl)
             }
             return .Direct(url: url)
         case .direct(let url):

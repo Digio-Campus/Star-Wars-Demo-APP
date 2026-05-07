@@ -90,20 +90,21 @@ struct FilmDetailView: View {
                                                 .tint(StarWarsColors.primary)
                                             }
 
-                                        case .direct, .embedded, .vimeo:
+                                        case .vimeo, .direct:
+                                            IOSTrailerPlayerView(source: target.toVideoSource())
+                                                .frame(height: 210)
+                                                .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                                        case .embedded(_, let thumbnailUrl):
                                             let source = target.toVideoSource()
-                                            VStack(alignment: .leading, spacing: 8) {
+                                            if case .YouTube(let videoId, _) = source {
+                                                YouTubeThumbnailPlayerView(videoId: videoId, thumbnailUrl: thumbnailUrl)
+                                                    .frame(height: 210)
+                                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                            } else {
                                                 IOSTrailerPlayerView(source: source)
                                                     .frame(height: 210)
-
-                                                if case .YouTube(let videoId) = source,
-                                                   let url = URL(string: "https://youtu.be/\(videoId)") {
-                                                    Button("Abrir en YouTube") {
-                                                        openURL(url)
-                                                    }
-                                                    .buttonStyle(.bordered)
-                                                    .tint(StarWarsColors.primary)
-                                                }
+                                                    .clipShape(RoundedRectangle(cornerRadius: 12))
                                             }
                                         }
                                     } else {

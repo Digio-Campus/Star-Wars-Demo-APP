@@ -16,7 +16,10 @@ class YouTubeProviderTest {
     @Test
     fun `maps search dto to candidate`() = runBlocking {
         val service = object : YouTubeService {
-            override suspend fun searchVideos(part: String, q: String, type: String, maxResults: Int, videoEmbeddable: String, apiKey: String): YouTubeSearchResponseDto {
+            override suspend fun searchVideos(
+                part: String, q: String, type: String, maxResults: Int, 
+                videoEmbeddable: String, videoSyndicated: String, apiKey: String
+            ): YouTubeSearchResponseDto {
                 return YouTubeSearchResponseDto(
                     items = listOf(
                         YouTubeSearchItemDto(
@@ -30,6 +33,10 @@ class YouTubeProviderTest {
                         )
                     )
                 )
+            }
+            
+            override suspend fun videos(part: String, id: String, apiKey: String): com.dam.starwarsapp.data.remote.dto.youtube.YouTubeVideosResponseDto {
+                return com.dam.starwarsapp.data.remote.dto.youtube.YouTubeVideosResponseDto(items = emptyList())
             }
         }
 

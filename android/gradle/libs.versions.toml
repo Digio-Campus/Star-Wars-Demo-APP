@@ -23,6 +23,8 @@ material = "1.12.0"
 datastore = "1.1.1"
 media3 = "1.4.1"
 playServicesCastFramework = "21.4.0"
+coil = "2.7.0"
+
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -81,6 +83,10 @@ androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navig
 
 # Coroutines
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+
+# Image Loading
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+
 
 # Tests
 junit = { group = "junit", name = "junit", version.ref = "junit" }

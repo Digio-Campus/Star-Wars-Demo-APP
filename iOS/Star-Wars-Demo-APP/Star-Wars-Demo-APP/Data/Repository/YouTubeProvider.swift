@@ -76,7 +76,7 @@ final class YouTubeProvider {
         struct Item: Decodable {
             struct Id: Decodable { let videoId: String? }
             struct Thumbnail: Decodable { let url: String? }
-            struct Thumbnails: Decodable { let medium: Thumbnail?; let `default`: Thumbnail? }
+            struct Thumbnails: Decodable { let high: Thumbnail?; let medium: Thumbnail?; let `default`: Thumbnail? }
             struct Snippet: Decodable { let title: String; let thumbnails: Thumbnails }
             let id: Id
             let snippet: Snippet
@@ -141,7 +141,7 @@ final class YouTubeProvider {
         let dto = try JSONDecoder().decode(SearchResponse.self, from: data)
         let candidates: [(videoId: String, title: String, thumbnailUrl: URL?)] = dto.items.compactMap {
             guard let videoId = $0.id.videoId else { return nil }
-            let thumbnailStr = $0.snippet.thumbnails.medium?.url ?? $0.snippet.thumbnails.default?.url
+            let thumbnailStr = $0.snippet.thumbnails.high?.url ?? $0.snippet.thumbnails.medium?.url ?? $0.snippet.thumbnails.default?.url
             let thumbnailUrl = thumbnailStr.flatMap(URL.init)
             return (videoId: videoId, title: $0.snippet.title, thumbnailUrl: thumbnailUrl)
         }

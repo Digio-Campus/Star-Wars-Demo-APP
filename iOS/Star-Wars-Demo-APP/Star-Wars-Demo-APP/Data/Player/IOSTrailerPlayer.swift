@@ -3,7 +3,7 @@ import UIKit
 import AVKit
 import WebKit
 
-final class IOSTrailerPlayer: UIViewController, TrailerPlayer, WKNavigationDelegate {
+final class IOSTrailerPlayer: UIViewController, TrailerPlayer, WKNavigationDelegate, WKScriptMessageHandler {
 
     private var avPlayer: AVPlayer?
     private var avPlayerController: AVPlayerViewController?
@@ -70,8 +70,21 @@ final class IOSTrailerPlayer: UIViewController, TrailerPlayer, WKNavigationDeleg
                         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
                     </head>
                     <body style="margin:0;background:#000;">
-                        <iframe id="player" width="100%" height="100%" src="\(embedURL)" frameborder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen playsinline referrerpolicy="no-referrer"></iframe>
+                                                <iframe id="player" width="100%" height="100%" src="\(embedURL)" frameborder="0"
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen playsinline referrerpolicy="no-referrer"></iframe>
+                                                <script>
+                                                    (function(){
+                                                        function notify(s){ try { window.webkit.messageHandlers.player.postMessage(s); } catch(e) { /* ignore */ } }
+                                                        var iframe = document.getElementById('player');
+                                                        if (!iframe) { notify('error'); return; }
+                                                        // Onload indicates the iframe element loaded; not necessarily playable, but a good sign.
+                                                        iframe.onload = function(){ notify('ready'); };
+                                                        // Also listen to messages forwarded from the player iframe
+                                                        window.addEventListener('message', function(ev){ try { notify('message:'+JSON.stringify(ev.data)); } catch(e){} }, false);
+                                                        // If nothing reports readiness within 3s, notify timeout so native can fallback.
+                                                        setTimeout(function(){ notify('timeout'); }, 3000);
+                                                    })();
+                                                </script>
                     </body>
                 </html>
                 """
@@ -97,7 +110,7 @@ final class IOSTrailerPlayer: UIViewController, TrailerPlayer, WKNavigationDeleg
                 self.avPlayer = player
                 self.avPlayerController = controller
 
-            case .YouTube(let videoId):
+            case .YouTube(let videoId, _):
                 let config = WKWebViewConfiguration()
                 config.allowsInlineMediaPlayback = true
                 config.allowsAirPlayForMediaPlayback = true
@@ -107,6 +120,7 @@ final class IOSTrailerPlayer: UIViewController, TrailerPlayer, WKNavigationDeleg
                 if #available(iOS 14.0, *) {
                     config.defaultWebpagePreferences.allowsContentJavaScript = true
                 }
+                config.userContentController.add(self, name: "player")
                 let wv = WKWebView(frame: self.view.bounds, configuration: config)
                 wv.navigationDelegate = self
                 wv.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -128,6 +142,7 @@ final class IOSTrailerPlayer: UIViewController, TrailerPlayer, WKNavigationDeleg
                 if #available(iOS 14.0, *) {
                     config.defaultWebpagePreferences.allowsContentJavaScript = true
                 }
+                config.userContentController.add(self, name: "player")
                 let wv = WKWebView(frame: self.view.bounds, configuration: config)
                 wv.navigationDelegate = self
                 wv.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -139,6 +154,35 @@ final class IOSTrailerPlayer: UIViewController, TrailerPlayer, WKNavigationDeleg
             }
         }
     }
+
+    // WKScriptMessageHandler: receive messages from the injected JS in the embed HTML
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard message.name == "player" else { return }
+        if let body = message.body as? String {
+            if body == "ready" {
+                return
+            }
+            if body == "timeout" || body == "error" || body.starts(with: "message:") {
+                DispatchQueue.main.async {
+                    if let source = self.currentSource {
+                        switch source {
+                        case .YouTube(let videoId, _):
+                            if let url = URL(string: "https://www.youtube.com/watch?v=\(videoId)") {
+                                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                            }
+                        case .Vimeo(let videoId):
+                            if let url = URL(string: "https://vimeo.com/\(videoId)") {
+                                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                            }
+                        default:
+                            break
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     func play() {
         DispatchQueue.main.async {

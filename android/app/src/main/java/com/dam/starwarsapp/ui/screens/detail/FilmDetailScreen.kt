@@ -3,52 +3,117 @@ package com.dam.starwarsapp.ui.screens.detail
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.view.View
+import android.widget.FrameLayout
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
-import android.view.View
-import android.widget.FrameLayout
-import androidx.compose.foundation.layout.height
-import kotlinx.coroutines.launch
+import coil.compose.AsyncImage
 import com.dam.starwarsapp.domain.video.PlaybackTarget
-import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 @Composable
-fun AndroidTrailerPlayerComposableForYouTube(videoId: String, modifier: Modifier = Modifier) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-    AndroidView(
-        modifier = modifier,
-        factory = { ctx ->
-            FrameLayout(ctx).apply {
-                val player = com.dam.starwarsapp.data.player.AndroidTrailerPlayer(ctx, lifecycleOwner.lifecycle, this)
-                setTag(player)
-                lifecycleOwner.lifecycleScope.launch {
-                    player.load(com.dam.starwarsapp.domain.video.VideoSource.YouTube(videoId))
-                }
-                addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-                    override fun onViewAttachedToWindow(v: View) {}
-                    override fun onViewDetachedFromWindow(v: View) {
-                        (v.getTag() as? com.dam.starwarsapp.domain.video.TrailerPlayer)?.release()
-                    }
-                })
-            }
+fun YouTubeThumbnailPlayer(
+    videoId: String,
+    thumbnailUrl: String?,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(Color.Black)
+            .clickable {
+                openYouTubeApp(context, videoId)
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        // Thumbnail
+        AsyncImage(
+            model = thumbnailUrl ?: "https://img.youtube.com/vi/$videoId/hqdefault.jpg",
+            contentDescription = "YouTube Thumbnail",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+            alpha = 0.7f
+        )
+        
+        // Gradient overlay for premium feel
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.4f)
+                        )
+                    )
+                )
+        )
+
+        // Play Button Overlay
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .background(
+                    color = Color.Black.copy(alpha = 0.6f),
+                    shape = androidx.compose.foundation.shape.CircleShape
+                )
+                .padding(4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Filled.PlayArrow,
+                contentDescription = "Reproducir",
+                tint = Color.White,
+                modifier = Modifier.size(40.dp)
+            )
         }
-    )
+        
+        // Small YouTube tag
+        Text(
+            text = "Reproducir en YouTube",
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 12.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White.copy(alpha = 0.8f)
+        )
+    }
 }
+
 @Composable
 fun FilmDetailScreen(
     viewModel: FilmDetailViewModel,
@@ -130,38 +195,18 @@ fun FilmDetailScreen(
                         is PlaybackTarget.Embedded -> {
                             when (target.provider.lowercase()) {
                                 "youtube" -> {
-                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        AndroidTrailerPlayerComposableForYouTube(
-                                            videoId = target.videoId,
-                                            modifier = Modifier.height(210.dp),
-                                        )
-
-                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            OutlinedButton(onClick = {
-                                                context.startActivity(
-                                                    Intent(
-                                                        Intent.ACTION_VIEW,
-                                                        Uri.parse("https://youtu.be/${target.videoId}"),
-                                                    ),
-                                                )
-                                            }) {
-                                                Text("Abrir en YouTube")
-                                            }
-
-                                            OutlinedButton(onClick = {
-                                                openYouTubeApp(context, target.videoId)
-                                            }) {
-                                                Text("Cast")
-                                            }
-                                        }
-                                    }
+                                    YouTubeThumbnailPlayer(
+                                        videoId = target.videoId,
+                                        thumbnailUrl = target.thumbnailUrl,
+                                        modifier = Modifier.height(210.dp)
+                                    )
                                 }
                                 else -> {
                                     OutlinedButton(onClick = {
                                         context.startActivity(
                                             Intent(
                                                 Intent.ACTION_VIEW,
-                                                Uri.parse("https://youtu.be/${target.videoId}"),
+                                                Uri.parse(target.videoId), // Fallback for other providers
                                             ),
                                         )
                                     }) {
@@ -256,38 +301,18 @@ fun FilmDetailScreen(
                     is PlaybackTarget.Embedded -> {
                         when (target.provider.lowercase()) {
                             "youtube" -> {
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    AndroidTrailerPlayerComposableForYouTube(
-                                        videoId = target.videoId,
-                                        modifier = Modifier.height(210.dp),
-                                    )
-
-                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        OutlinedButton(onClick = {
-                                            context.startActivity(
-                                                Intent(
-                                                    Intent.ACTION_VIEW,
-                                                    Uri.parse("https://youtu.be/${target.videoId}"),
-                                                ),
-                                            )
-                                        }) {
-                                            Text("Abrir en YouTube")
-                                        }
-
-                                        OutlinedButton(onClick = {
-                                            openYouTubeApp(context, target.videoId)
-                                        }) {
-                                            Text("Cast")
-                                        }
-                                    }
-                                }
+                                YouTubeThumbnailPlayer(
+                                    videoId = target.videoId,
+                                    thumbnailUrl = target.thumbnailUrl,
+                                    modifier = Modifier.height(210.dp)
+                                )
                             }
                             else -> {
                                 OutlinedButton(onClick = {
                                     context.startActivity(
                                         Intent(
                                             Intent.ACTION_VIEW,
-                                            Uri.parse("https://youtu.be/${target.videoId}"),
+                                            Uri.parse(target.videoId),
                                         ),
                                     )
                                 }) {
@@ -340,7 +365,7 @@ fun FilmDetailScreen(
 
 private fun openYouTubeApp(context: android.content.Context, videoId: String) {
     val appIntent = Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:$videoId"))
-    val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://youtu.be/$videoId"))
+    val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=$videoId"))
 
     try {
         context.startActivity(appIntent)

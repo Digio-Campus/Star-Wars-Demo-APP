@@ -44,7 +44,7 @@ class VideoResolverImpl @Inject constructor(
                 }
 
                 if (candidate.embeddable) {
-                    return Result.success(PlaybackTarget.Embedded(candidate.id, candidate.provider))
+                    return Result.success(PlaybackTarget.Embedded(candidate.id, candidate.provider, candidate.thumbnailUrl))
                 }
 
                 val fallbackExternal = candidate.watchUrl

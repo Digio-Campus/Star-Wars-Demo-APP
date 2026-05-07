@@ -1,14 +1,25 @@
 package com.dam.starwarsapp.ui.screens.detail
 
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import com.dam.starwarsapp.util.AppLog
 
 private class WebViewHolder {
     var webView: WebView? = null
@@ -20,28 +31,51 @@ fun YouTubeWebPlayer(
     videoId: String,
     modifier: Modifier = Modifier,
 ) {
-    val embedHtml =
-        "<html><head><meta name=\"viewport\" content=\"initial-scale=1.0, width=device-width\" /></head><body style=\"margin:0;padding:0;\"><iframe width=\"100%\" height=\"100%\" src=\"https://www.youtube.com/embed/$videoId?rel=0&modestbranding=1&autoplay=1&playsinline=1&enablejsapi=1\" frameborder=\"0\" allow=\"accelerometer; autoplay; encrypted-media; picture-in-picture; clipboard-write\" allowfullscreen></iframe></body></html>"
+    val embedHtml = """
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+                <style>body, html { margin: 0; padding: 0; background-color: #000000; height: 100%; width: 100%; overflow: hidden; }</style>
+            </head>
+            <body>
+                <div id="player"></div>
+                <script>
+                    var tag = document.createElement('script');
+                    tag.src = "https://www.youtube.com/iframe_api";
+                    var firstScriptTag = document.getElementsByTagName('script')[0];
+                    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+                    var player;
+                    function onYouTubeIframeAPIReady() {
+                        player = new YT.Player('player', {
+                            height: '100%',
+                            width: '100%',
+                            videoId: '$videoId',
+                            playerVars: {
+                                'playsinline': 1,
+                                'modestbranding': 1,
+                                'rel': 0
+                            }
+                        });
+                    }
+                </script>
+            </body>
+        </html>
+    """.trimIndent()
 
     val holder = remember { WebViewHolder() }
 
     DisposableEffect(Unit) {
         onDispose {
             val webView = holder.webView
-            val lastId = holder.lastVideoId
             holder.webView = null
             holder.lastVideoId = null
 
             if (webView != null) {
-                AppLog.d(TAG, "Disposing WebView@${webView.hashCode()} (lastVideoId=$lastId)")
                 runCatching { webView.stopLoading() }
                 runCatching { webView.loadUrl("about:blank") }
                 runCatching { (webView.parent as? ViewGroup)?.removeView(webView) }
-                runCatching { webView.removeAllViews() }
-                runCatching { webView.clearHistory() }
                 runCatching { webView.destroy() }
-            } else {
-                AppLog.d(TAG, "Disposing YouTubeWebPlayer (no WebView instance)")
             }
         }
     }
@@ -50,29 +84,27 @@ fun YouTubeWebPlayer(
         modifier = modifier,
         factory = { ctx ->
             WebView(ctx).apply {
+                setLayerType(android.view.View.LAYER_TYPE_SOFTWARE, null)
+                
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
                 settings.mediaPlaybackRequiresUserGesture = false
-                settings.allowContentAccess = true
-                settings.allowFileAccess = true
+                settings.userAgentString = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+                
                 webViewClient = WebViewClient()
+                webChromeClient = android.webkit.WebChromeClient()
 
                 holder.webView = this
                 holder.lastVideoId = videoId
 
-                AppLog.d(TAG, "Created WebView@${hashCode()} videoId=$videoId")
-                // Use youtube.com as base URL to provide an origin for embed compatibility
                 loadDataWithBaseURL("https://www.youtube.com", embedHtml, "text/html", "utf-8", null)
             }
         },
         update = { view ->
             if (holder.lastVideoId != videoId) {
                 holder.lastVideoId = videoId
-                AppLog.d(TAG, "Updating WebView@${view.hashCode()} videoId=$videoId")
-                view.loadDataWithBaseURL(null, embedHtml, "text/html", "utf-8", null)
+                view.loadDataWithBaseURL("https://www.youtube.com", embedHtml, "text/html", "utf-8", null)
             }
         },
     )
 }
-
-private const val TAG = "YouTubeWebPlayer"

@@ -1,180 +1,192 @@
 package com.dam.starwarsapp.data.player
 
 import android.content.Context
-import android.view.View
 import android.view.ViewGroup
-import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.FrameLayout
-import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import com.dam.starwarsapp.domain.video.TrailerPlayer
-import com.dam.starwarsapp.domain.video.VideoSource
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.OnLifecycleEvent
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.dam.starwarsapp.domain.video.TrailerPlayer
+import com.dam.starwarsapp.domain.video.VideoSource
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
-/**
- * Simple Android implementation of TrailerPlayer supporting Direct (Media3) and YouTube (WebView iframe).
- * Casting is left as a TODO when Cast libraries are available.
- */
 class AndroidTrailerPlayer(
     private val context: Context,
     private val lifecycle: Lifecycle,
-    private val container: ViewGroup,
-) : TrailerPlayer {
+    private val container: ViewGroup
+) : TrailerPlayer, LifecycleObserver {
 
     private var exoPlayer: ExoPlayer? = null
-    private var playerView: PlayerView? = null
-    private var webView: WebView? = null
-    private var lifecycleObserver: DefaultLifecycleObserver? = null
+    var webView: WebView? = null
 
     init {
-        lifecycleObserver = object : DefaultLifecycleObserver {
-            override fun onPause(owner: LifecycleOwner) {
-                pause()
-            }
-
-            override fun onDestroy(owner: LifecycleOwner) {
-                release()
-            }
-        }.also { lifecycle.addObserver(it) }
+        lifecycle.addObserver(this)
     }
 
     override suspend fun load(source: VideoSource) {
+        release()
+
         when (source) {
             is VideoSource.Direct -> loadDirect(source.url)
             is VideoSource.YouTube -> loadYouTube(source.videoId)
-            is VideoSource.Vimeo -> {
-                // Vimeo is handled by existing VimeoPlayerScreen composable as a fallback.
-            }
+            is VideoSource.Vimeo -> loadVimeo(source.videoId)
         }
     }
 
-    private fun loadDirect(url: String) {
-        releaseMedia()
-        exoPlayer = ExoPlayer.Builder(context).build()
-        playerView = PlayerView(context).apply {
-            player = exoPlayer
-            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            useController = true
-        }
-        container.addView(playerView)
-        val mediaItem = MediaItem.fromUri(url)
-        exoPlayer?.setMediaItem(mediaItem)
-        exoPlayer?.prepare()
-    }
+    private suspend fun loadYouTube(videoId: String) = suspendCancellableCoroutine<Unit> { cont ->
+        val embedHtml = """
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+                    <style>body, html { margin: 0; padding: 0; background-color: #000000; height: 100%; width: 100%; overflow: hidden; }</style>
+                </head>
+                <body>
+                    <div id="player"></div>
+                    <script>
+                        var tag = document.createElement('script');
+                        tag.src = "https://www.youtube.com/iframe_api";
+                        var firstScriptTag = document.getElementsByTagName('script')[0];
+                        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+                        var player;
+                        function onYouTubeIframeAPIReady() {
+                            player = new YT.Player('player', {
+                                height: '100%',
+                                width: '100%',
+                                videoId: '$videoId',
+                                playerVars: {
+                                    'playsinline': 1,
+                                    'modestbranding': 1,
+                                    'rel': 0
+                                }
+                            });
+                        }
+                    </script>
+                </body>
+            </html>
+        """.trimIndent()
 
-    private fun loadYouTube(videoId: String) {
-        releaseMedia()
         webView = WebView(context).apply {
             layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            setLayerType(android.view.View.LAYER_TYPE_SOFTWARE, null)
             settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            settings.mediaPlaybackRequiresUserGesture = false
+            settings.userAgentString = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
             webViewClient = WebViewClient()
-            addJavascriptInterface(object {
-                @JavascriptInterface
-                fun postMessage(msg: String) {
-                    // optional bridge from JS
-                }
-            }, "AndroidBridge")
-
-            val html = """
-                <html><body style="margin:0;padding:0;height:100%;width:100%;">
-                <div id="player"></div>
-                <script>
-                  var tag = document.createElement('script');
-                  tag.src = "https://www.youtube.com/iframe_api";
-                  var firstScriptTag = document.getElementsByTagName('script')[0];
-                  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-                  var player;
-                  function onYouTubeIframeAPIReady() {
-                    player = new YT.Player('player', {
-                      height: '100%',
-                      width: '100%',
-                      videoId: '$videoId',
-                      playerVars: { 'autoplay': 0, 'controls': 1 },
-                      events: {
-                        'onReady': function(event) {
-                          try { AndroidBridge.postMessage('ready'); } catch(e) {}
-                        }
-                      }
-                    });
-                  }
-                  function playVideo() { if (player) player.playVideo(); }
-                  function pauseVideo() { if (player) player.pauseVideo(); }
-                </script>
-                </body></html>
-            """.trimIndent()
-
-            loadDataWithBaseURL(null, html, "text/html", "utf-8", null)
+            webChromeClient = android.webkit.WebChromeClient()
         }
 
         container.addView(webView)
+        webView?.loadDataWithBaseURL("https://www.youtube.com", embedHtml, "text/html", "utf-8", null)
+
+        cont.invokeOnCancellation {
+            runCatching {
+                webView?.stopLoading()
+                container.removeView(webView)
+                webView?.destroy()
+                webView = null
+            }
+        }
+
+        cont.resume(Unit)
+    }
+
+    private suspend fun loadVimeo(videoId: String) = suspendCancellableCoroutine<Unit> { cont ->
+        val embedHtml = """
+            <html>
+                <head>
+                    <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+                    <style>body { margin: 0; padding: 0; background-color: #000000; }</style>
+                </head>
+                <body>
+                    <iframe width="100%" height="100%" 
+                            src="https://player.vimeo.com/video/$videoId?autoplay=1" 
+                            frameborder="0" 
+                            allow="autoplay; fullscreen; picture-in-picture" 
+                            allowfullscreen>
+                    </iframe>
+                </body>
+            </html>
+        """.trimIndent()
+
+        webView = WebView(context).apply {
+            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            settings.mediaPlaybackRequiresUserGesture = false
+            webViewClient = WebViewClient()
+            webChromeClient = android.webkit.WebChromeClient()
+        }
+
+        container.addView(webView)
+        webView?.loadDataWithBaseURL("https://vimeo.com", embedHtml, "text/html", "utf-8", null)
+
+        cont.invokeOnCancellation {
+            runCatching {
+                webView?.stopLoading()
+                container.removeView(webView)
+                webView?.destroy()
+                webView = null
+            }
+        }
+
+        cont.resume(Unit)
+    }
+
+    private suspend fun loadDirect(url: String) = suspendCancellableCoroutine<Unit> { cont ->
+        exoPlayer = ExoPlayer.Builder(context).build().apply {
+            setMediaItem(MediaItem.fromUri(url))
+            prepare()
+            playWhenReady = true
+        }
+        
+        val playerView = PlayerView(context).apply {
+            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            player = exoPlayer
+        }
+        
+        container.addView(playerView)
+
+        cont.invokeOnCancellation {
+            container.removeView(playerView)
+            exoPlayer?.release()
+            exoPlayer = null
+        }
+        
+        cont.resume(Unit)
     }
 
     override fun play() {
-        try {
-            exoPlayer?.play()
-        } catch (e: Exception) {
-        }
-        try {
-            webView?.evaluateJavascript("playVideo()", null)
-        } catch (e: Exception) {
-        }
+        exoPlayer?.play()
     }
 
     override fun pause() {
-        try {
-            exoPlayer?.pause()
-        } catch (e: Exception) {
-        }
-        try {
-            webView?.evaluateJavascript("pauseVideo()", null)
-        } catch (e: Exception) {
-        }
+        exoPlayer?.pause()
     }
 
+    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     override fun release() {
-        try { exoPlayer?.release() } catch (e: Exception) {}
+        exoPlayer?.release()
         exoPlayer = null
 
-        if (playerView != null) {
-            try { (playerView!!.parent as? ViewGroup)?.removeView(playerView) } catch (e: Exception) {}
-            playerView = null
+        webView?.apply {
+            stopLoading()
+            loadUrl("about:blank")
+            container.removeView(this)
+            destroy()
         }
-
-        if (webView != null) {
-            try { webView?.stopLoading() } catch (e: Exception) {}
-            try { (webView!!.parent as? ViewGroup)?.removeView(webView) } catch (e: Exception) {}
-            try { webView!!.removeAllViews() } catch (e: Exception) {}
-            try { webView!!.clearHistory() } catch (e: Exception) {}
-            try { webView!!.destroy() } catch (e: Exception) {}
-            webView = null
-        }
-
-        lifecycleObserver?.let { lifecycle.removeObserver(it) }
-        lifecycleObserver = null
+        webView = null
+        
+        container.removeAllViews()
     }
 
     override fun enableCasting() {
-        // TODO: Wire CastPlayer when Cast libraries are added. Safe no-op for now.
-    }
-
-    private fun releaseMedia() {
-        try { exoPlayer?.pause() } catch (e: Exception) {}
-        webView?.let { try { it.stopLoading() } catch (_: Exception) {} }
-        if (playerView != null) {
-            try { (playerView!!.parent as? ViewGroup)?.removeView(playerView) } catch (_: Exception) {}
-            playerView = null
-        }
-        if (webView != null) {
-            try { (webView!!.parent as? ViewGroup)?.removeView(webView) } catch (_: Exception) {}
-            try { webView!!.removeAllViews() } catch (_: Exception) {}
-            try { webView!!.destroy() } catch (_: Exception) {}
-            webView = null
-        }
-        exoPlayer = null
+        // Casting to be implemented later
     }
 }

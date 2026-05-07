@@ -21,7 +21,8 @@ class YouTubeProvider @Inject constructor(
 
             val baseQuery = if (normalized.contains("star wars", ignoreCase = true)) normalized else "Star Wars $normalized"
             val trailerQuery = if (baseQuery.contains("trailer", ignoreCase = true)) baseQuery else "$baseQuery trailer"
-            val query = "$trailerQuery official"
+            // Excluimos la palabra "official" usando el operador "-" en YouTube para evitar los bloqueos estrictos de Disney
+            val query = "$trailerQuery -official"
 
             val resp = service.searchVideos(
                 part = "snippet",
@@ -33,14 +34,17 @@ class YouTubeProvider @Inject constructor(
                 apiKey = apiKey,
             )
 
-            val ids = resp.items.mapNotNull { it.id?.videoId }.distinct().take(50)
+            val thumbnailsById = resp.items.associate { 
+                it.id?.videoId to (it.snippet?.thumbnails?.high?.url ?: it.snippet?.thumbnails?.medium?.url ?: it.snippet?.thumbnails?.default?.url)
+            }
+            val ids = resp.items.mapNotNull { it.id?.videoId }.distinct()
             if (ids.isEmpty()) return Result.success(null)
 
             val fallbackId = ids.first()
             val fallbackWatchUrl = "https://youtu.be/$fallbackId"
+            val fallbackThumb = thumbnailsById[fallbackId]
 
-            // Validate candidates using videos.list to avoid age-restricted / non-embeddable videos.
-            // If this call fails (quota, etc.), we still return the first search match.
+            // Validate candidates using videos.list to avoid age-restricted videos.
             val details = runCatching {
                 service.videos(
                     part = "status,contentDetails",
@@ -56,40 +60,31 @@ class YouTubeProvider @Inject constructor(
                         provider = "youtube",
                         embeddable = true,
                         watchUrl = fallbackWatchUrl,
+                        thumbnailUrl = fallbackThumb,
                     ),
                 )
             }
 
             val byId = details.items.associateBy { it.id }
 
-            fun isValidEmbeddable(id: String): Boolean {
+            fun isValid(id: String): Boolean {
                 val d = byId[id] ?: return false
-                val embeddable = d.status?.embeddable == true
                 val privacyOk = d.status?.privacyStatus?.equals("public", ignoreCase = true) ?: true
                 val ageRestricted = d.contentDetails?.contentRating?.ytRating == "ytAgeRestricted"
                 val regionBlocked = !(d.contentDetails?.regionRestriction?.blocked.isNullOrEmpty())
-                return embeddable && privacyOk && !ageRestricted && !regionBlocked
+                // Ya no comprobamos 'embeddable' porque vamos a usar la miniatura como fallback universal
+                return privacyOk && !ageRestricted && !regionBlocked
             }
 
-            val selected = ids.firstOrNull(::isValidEmbeddable)
-            if (selected != null) {
-                return Result.success(
-                    VideoCandidate(
-                        id = selected,
-                        provider = "youtube",
-                        embeddable = true,
-                        watchUrl = "https://youtu.be/$selected",
-                    ),
-                )
-            }
-
-            // No safe embeddable option found -> mark as non-embeddable so resolver can fall back to other providers.
+            val selected = ids.firstOrNull(::isValid) ?: fallbackId
+            
             return Result.success(
                 VideoCandidate(
-                    id = fallbackId,
+                    id = selected,
                     provider = "youtube",
-                    embeddable = false,
-                    watchUrl = fallbackWatchUrl,
+                    embeddable = true, // Forzamos true para que el resolver lo acepte
+                    watchUrl = "https://youtu.be/$selected",
+                    thumbnailUrl = thumbnailsById[selected] ?: fallbackThumb,
                 ),
             )
         } catch (e: Exception) {
